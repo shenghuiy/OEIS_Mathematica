@@ -22,10 +22,7 @@ Begin["`Private`"];
 
 
 (* ::Input:: *)
-(*Grid[Map[Style[#,18]&,{*)
-(*{"\[Phi](p\:1d43)","\[Psi](p\:1d43)","d(p\:1d43)"},*)
-(*{"\!\(\*SuperscriptBox[\(p\), \(a - 1\)]\)(p-1)","\!\(\*SuperscriptBox[\(p\), \(a - 1\)]\)(p+1)","a+1"}*)
-(*},{2}],Dividers->All]*)
+(*Grid[Map[Style[#, 18]& , {{"\[Phi](p\:1d43)", "\[Psi](p\:1d43)", "d(p\:1d43)"}, {"\!\(\*SuperscriptBox[\(p\), \(a - 1\)]\)(p-1)", "\!\(\*SuperscriptBox[\(p\), \(a - 1\)]\)(p+1)", "a+1"}}, {2}],Dividers->All]*)
 
 
 (* ::Text:: *)
@@ -37,7 +34,7 @@ Begin["`Private`"];
 
 
 (* ::ItemNumbered:: *)
-(*Factorizing sieve*)
+(*Factorization sieve*)
 
 
 (* ::Text:: *)
