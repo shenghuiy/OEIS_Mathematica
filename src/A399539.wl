@@ -15,18 +15,37 @@ Begin["`Private`"];
 
 (* ::ItemNumbered:: *)
 (*The three functions being sieved*)
-(*The predicate is \[Psi](k) \[Minus] \[CurlyPhi](k) = d(k)\:2074, and all three are multiplicative \[LongDash] f(ab) = f(a)f(b) whenever gcd(a,b)=1 \[LongDash] with closed forms on prime powers:*)
-(*\[CurlyPhi](p\:1d43)	\[Psi](p\:1d43)	d(p\:1d43)*)
-(*p\:1d43\:207b\.b9(p\[Minus]1)	p\:1d43\:207b\.b9(p+1)	a+1*)
 
 
 (* ::Text:: *)
-(*That's the whole reason a sieve is possible: you never factor anything. *)
+(*The predicate is \[Psi](k) \[Minus] \[CurlyPhi](k) = d(k)\:2074, and all three are multiplicative \[LongDash] f(ab) = f(a)f(b) whenever gcd(a,b)=1 \[LongDash] with closed forms on prime powers:*)
+
+
+(* ::Input:: *)
+(*Grid[Map[Style[#,18]&,{*)
+(*{"\[Phi](p\:1d43)","\[Psi](p\:1d43)","d(p\:1d43)"},*)
+(*{"\!\(\*SuperscriptBox[\(p\), \(a - 1\)]\)(p-1)","\!\(\*SuperscriptBox[\(p\), \(a - 1\)]\)(p+1)","a+1"}*)
+(*},{2}],Dividers->All]*)
+
+
+(* ::Text:: *)
 (*You build f(m) from f of already-computed smaller numbers, which is why all three arrays are filled in one pass rather than calling FactorInteger N times.*)
 
 
 (* ::Text:: *)
-(*FunctionCompile only accepts a restricted set of functions. So the body hand-rolls trial division and builds all three quantities in a single sweep*)
+(*FunctionCompile only accepts a restricted set of functions. So the body hand-rolls trial division and builds all three quantities in a single sweep.*)
+
+
+(* ::ItemNumbered:: *)
+(*Factorizing sieve*)
+
+
+(* ::Text:: *)
+(*rem starts as the number itself and gets divided down as each prime is stripped. Its final value is the unfactored remainder.*)
+(*st = Max[p p, p Quotient[lo + p - 1, p]] \[LongDash] start at the first multiple of p in the block, but never below p\.b2. This means p only ever touches m when p <= Sqrt[m].*)
+(*Therefore, at the end, rem > 1 is guaranteed to be a single prime \[LongDash] a number <= hi cannot have two prime factors both exceeding Sqrt[hi]. *)
+(*That's the If[r > 1, ...] cleanup, which picks up the large prime for free instead of sieving up to N. (Example: 6 is skipped by p=3 since 9 > 6, and 3 survives in rem to be handled there.)*)
+(*Inside the inner loop, p | m holds by construction, so the first Quotient is unconditional and only further divisions need the q - r p != 0 test \[LongDash] saving a Mod on roughly 3N hits.*)
 
 
 isokSeg=FunctionCompile@Function[{Typed[nmax,"MachineInteger"],Typed[bsize,"MachineInteger"]},Module[{rt,comp,primes,np=0,rem,psi,phi,d,hi,len,p,st,idx,e,pe,q,r,res},
