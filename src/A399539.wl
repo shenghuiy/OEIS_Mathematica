@@ -3,7 +3,7 @@
 BeginPackage["OEIS`"];
 
 
-A399539[n_Integer?Positive]:=isokSeg[n,10^4]
+A399539[n_Integer?Positive]:=isokSeg[n,2^16]
 
 
 Begin["`Private`"];
@@ -13,8 +13,20 @@ Begin["`Private`"];
 (*Segmented Euler Sieve *)
 
 
+(* ::ItemNumbered:: *)
+(*The three functions being sieved*)
+(*The predicate is \[Psi](k) \[Minus] \[CurlyPhi](k) = d(k)\:2074, and all three are multiplicative \[LongDash] f(ab) = f(a)f(b) whenever gcd(a,b)=1 \[LongDash] with closed forms on prime powers:*)
+(*\[CurlyPhi](p\:1d43)	\[Psi](p\:1d43)	d(p\:1d43)*)
+(*p\:1d43\:207b\.b9(p\[Minus]1)	p\:1d43\:207b\.b9(p+1)	a+1*)
+
+
 (* ::Text:: *)
-(*Use FunctionCompile *)
+(*That's the whole reason a sieve is possible: you never factor anything. *)
+(*You build f(m) from f of already-computed smaller numbers, which is why all three arrays are filled in one pass rather than calling FactorInteger N times.*)
+
+
+(* ::Text:: *)
+(*FunctionCompile only accepts a restricted set of functions. So the body hand-rolls trial division and builds all three quantities in a single sweep*)
 
 
 isokSeg=FunctionCompile@Function[{Typed[nmax,"MachineInteger"],Typed[bsize,"MachineInteger"]},Module[{rt,comp,primes,np=0,rem,psi,phi,d,hi,len,p,st,idx,e,pe,q,r,res},
@@ -58,3 +70,16 @@ End[];
 
 
 EndPackage[];
+
+
+(* ::Subsubsection:: *)
+(*Benchmark*)
+
+
+(* ::Text:: *)
+(*It takes about 5 sec to find all elements below 10^8 on Macbook pro M1Max + 32 GB*)
+
+
+(* ::Program:: *)
+(*In[]:= A399539[10^8]//AbsoluteTiming*)
+(*Out[]= {4.73983,{2071,3007,4087,14780,17468,18428,19388,39288,114160,193340,263252,628608,755325,976284,2823876,3133344,3182328,3392260,3549105,3556196,4488544,5065092,5277051,7176924,8791600,9928704,10794375,12330540,20254976,21778944,35991872,38026716,38637144,39080960,40434636,43918956,45348384,50917248,53308125,54561364,68134912,73605120,82462800,88654800,92143980}}*)
