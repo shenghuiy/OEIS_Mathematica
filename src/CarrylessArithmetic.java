@@ -24,9 +24,11 @@ Available operations (public static methods):
    dismalAdd(a, b)          Returns a+b
    dismalMul(a, b)          Returns a*b
    pCountRange(a, b)        Counts the primes in [a,b]
-   pPrimesRange(a, b)       Counts the primes in [a,b]
-   dinfoRange(a, b, false)  Outputs info about divisors of n, a<=n<=b
-   dinfoRange(a, b, true)   Outputs info about prime divisors of n, a<=n<=b
+   pPrimesRange(a, b)       Returns the primes in [a,b]
+   dinfo(a, b)              Returns info about divisors of n, a<=n<=b
+   pdinfo(a, b)             Returns info about prime divisors of n, a<=n<=b
+   dinfoRange(a, b, false)  Prints info about divisors of n, a<=n<=b
+   dinfoRange(a, b, true)   Prints info about prime divisors of n, a<=n<=b
    helpDinfo()              Describes the output of dinfoRange
 
 The callback passed to dismalDivide / dismalDivisors receives each result
@@ -547,49 +549,72 @@ public final class CarrylessArithmetic {
         return new BigDecimal(d).setScale(0, java.math.RoundingMode.HALF_EVEN).toPlainString();
     }
 
-    public static void dinfoRange(String lo, String hi, boolean primefields) {
+    /**
+     * Returns the dinfo/pdinfo table for lo <= n <= hi: row 0 is the header,
+     * then one row per n (see helpDinfo for the columns).
+     */
+    public static String[][] dinfoTable(String lo, String hi, boolean primefields) {
         Set<String> primeHash = new HashSet<>();
 
         if (primefields) {
             collectPrimes(primeHash, hi);
         }
 
+        List<String[]> rows = new ArrayList<>();
+        String header =
+                "n|9ish|prime|pseudoprime|divisors|bd_divisors|dsum_divisors|dsum_bd_divisors|dsum_bd_divisors2|dsum_ne_divisors|2*n|sum_divisors|sum_bd_divisors|sum_bd_divisors2|sum_ne_divisors";
+        if (primefields) header += "|prime_divisors|sum_prime_divisors|prod_prime_divisors";
+        rows.add(header.split("\\|"));
+
         String x = lo;
-
-        StringBuilder header = new StringBuilder(
-                "n|9ish|prime|pseudoprime|divisors|bd_divisors|dsum_divisors|dsum_bd_divisors|dsum_bd_divisors2|dsum_ne_divisors|2*n|sum_divisors|sum_bd_divisors|sum_bd_divisors2|sum_ne_divisors");
-        if (primefields) header.append("|prime_divisors|sum_prime_divisors|prod_prime_divisors");
-        System.out.println(header);
-
         while (notPast(x, hi)) {
             DivInfo di = new DivInfo(x, primeHash);
 
             dismalDivisors(x, di::gatherInf);
             String x2 = dismalMul(x, "2");
 
-            StringBuilder line = new StringBuilder();
-            line.append(x).append('|')
-                    .append(x.indexOf('9') >= 0 ? 1 : 0).append('|')
-                    .append(di.isPrime ? 1 : 0).append('|')
-                    .append(di.isPseudoprime ? 1 : 0).append('|')
-                    .append(di.nDivisors).append('|')
-                    .append(di.nBoundedDivisors).append('|')
-                    .append(di.dismalSumDivisors).append('|')
-                    .append(di.dismalSumBoundedDivisors).append('|')
-                    .append(di.dismalSumBoundedDivisors2).append('|')
-                    .append(di.dismalSumNeDivisors).append('|')
-                    .append(x2).append('|')
-                    .append(fmt0(di.sumDivisors)).append('|')
-                    .append(fmt0(di.sumBoundedDivisors)).append('|')
-                    .append(fmt0(di.sumBoundedDivisors2)).append('|')
-                    .append(fmt0(di.sumNeDivisors));
+            List<String> row = new ArrayList<>(Arrays.asList(
+                    x,
+                    x.indexOf('9') >= 0 ? "1" : "0",
+                    di.isPrime ? "1" : "0",
+                    di.isPseudoprime ? "1" : "0",
+                    String.valueOf(di.nDivisors),
+                    String.valueOf(di.nBoundedDivisors),
+                    di.dismalSumDivisors,
+                    di.dismalSumBoundedDivisors,
+                    di.dismalSumBoundedDivisors2,
+                    di.dismalSumNeDivisors,
+                    x2,
+                    fmt0(di.sumDivisors),
+                    fmt0(di.sumBoundedDivisors),
+                    fmt0(di.sumBoundedDivisors2),
+                    fmt0(di.sumNeDivisors)));
             if (primefields) {
-                line.append('|').append(di.nPrimeDivisors)
-                        .append('|').append(di.dismalSumPrimeDivisors)
-                        .append('|').append(di.dismalProdPrimeDivisors);
+                row.add(String.valueOf(di.nPrimeDivisors));
+                row.add(di.dismalSumPrimeDivisors);
+                row.add(di.dismalProdPrimeDivisors);
             }
+            rows.add(row.toArray(new String[0]));
 
             x = incrDigitNum(x);
+        }
+        return rows.toArray(new String[0][]);
+    }
+
+    /** Divisor info for lo <= n <= hi, as a table (C command: dinfo). */
+    public static String[][] dinfo(String lo, String hi) {
+        return dinfoTable(lo, hi, false);
+    }
+
+    /** Divisor and prime-divisor info for lo <= n <= hi, as a table (C command: pdinfo). */
+    public static String[][] pdinfo(String lo, String hi) {
+        return dinfoTable(lo, hi, true);
+    }
+
+    /** Prints the dinfoTable as '|' separated lines, like the C program. */
+    public static void dinfoRange(String lo, String hi, boolean primefields) {
+        for (String[] row : dinfoTable(lo, hi, primefields)) {
+            System.out.println(String.join("|", row));
         }
     }
 
