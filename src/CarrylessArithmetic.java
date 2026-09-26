@@ -46,8 +46,8 @@ public final class CarrylessArithmetic {
 
     private CarrylessArithmetic() {}
 
-    static int nfound = 0;
-    static int ndeadend = 0;
+    static int nFound = 0;
+    static int nDeadEnd = 0;
     static int ndup = 0;
 
     static final int DIV_PROD_MUL = 16;
@@ -106,7 +106,7 @@ public final class CarrylessArithmetic {
             while (start < len && res[start] == '0') start++;
             String s = new String(res, start, len - start);
             if (reshash.add(s)) {
-                nfound++;
+                nFound++;
                 nSol = callback.applyAsInt(s);
                 return nSol;
             } else {
@@ -183,7 +183,7 @@ public final class CarrylessArithmetic {
                 }
             }
 
-            if (nCall == 0) ndeadend++;
+            if (nCall == 0) nDeadEnd++;
             return nSol;
         }
     }
@@ -307,7 +307,7 @@ public final class CarrylessArithmetic {
                 }
             }
 
-            if (nCall == 0) ndeadend++;
+            if (nCall == 0) nDeadEnd++;
 
             return nSol;
         }
@@ -406,21 +406,6 @@ public final class CarrylessArithmetic {
         return 0;
     }
 
-    public static void usage(String fname) {
-        System.err.printf("Usage: %s cmd [args...]%n", fname);
-        System.err.println("available cmds are:");
-        System.err.println("   div a b           Outputs c such that b*c = a");
-        System.err.println("   divs a            Outputs b such that b*c = a for some c");
-        System.err.println("   add a b           Outputs a+b");
-        System.err.println("   mul a b           Outputs a*b");
-        System.err.println("   pCount a b        Counts the primes in [a,b]");
-        System.err.println("   dinfo a           Outputs info about divisors of a");
-        System.err.println("   dinfo a b         Outputs info about divisors of n, a<=n<=b");
-        System.err.println("   pdinfo a          Outputs info about prime divisors of a");
-        System.err.println("   pdinfo a b        Outputs info about prime divisors of n, a<=n<=b");
-        System.err.println("   help_dinfo        Describes the output of dinfo and pdinfo");
-        System.err.println("   help              Outputs this text");
-    }
 
     /** Divisor statistics for one number, accumulated by gatherInf. */
     private static final class DivInfo {
@@ -523,7 +508,7 @@ public final class CarrylessArithmetic {
         return "1" + new String(c);
     }
 
-    
+
 
     /** Adds every dismal prime with at most length(hi) digits to primeHash. */
     private static void collectPrimes(Set<String> primeHash, String hi) {
