@@ -596,7 +596,7 @@ public final class CarrylessArithmetic {
 
     /**
      * Returns the dinfo/pdinfo table for lo <= n <= hi: row 0 is the header,
-     * then one row per n (the column names are listed in README.md).
+     * then one row per n (the column names are listed in docs/CarrylessArithmetic.md).
      */
     public static String[][] dinfoTable(String lo, String hi, boolean primefields) {
         // Divisors of n never have more digits than n, so primes longer than
