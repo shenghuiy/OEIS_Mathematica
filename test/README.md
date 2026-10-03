@@ -6,6 +6,8 @@ JUnit 5 tests, run with Maven from the repository root:
 mvn test
 ```
 
+GitHub Actions (`.github/workflows/maven.yml`) runs the same `mvn test` on Java 11 and 21 for every pull request and every push to `main`, and keeps the surefire reports as a downloadable artifact of each run.
+
 ## Layout
 
 | Path | Contents |
