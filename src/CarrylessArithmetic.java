@@ -117,7 +117,9 @@ public final class CarrylessArithmetic {
 
         for (char d = min[depth]; d <= max[depth]; d++) {
             res[depth] = d;
-            nSol += spin(res, min, max, len, reshash, depth + 1, callback);
+            int rval = spin(res, min, max, len, reshash, depth + 1, callback);
+            if (rval < 0) return rval;
+            nSol += rval;
         }
         return nSol;
     }
@@ -486,8 +488,11 @@ public final class CarrylessArithmetic {
     }
 
     private static boolean isDismalPrime(String x) {
-        return !x.equals("8") && !x.equals("9")
-                && dismalDivisors(x, res -> properDivisor(res, x)) == 0;
+        // If the largest digit d of x is below 9 then d*x = x, so d is a proper
+        // divisor: every prime contains a 9 (this also rules out 1..8).
+        if (x.indexOf('9') < 0 || x.equals("9")) return false;
+        // Stop the search at the first proper divisor.
+        return dismalDivisors(x, res -> properDivisor(res, x) > 0 ? -1 : 0) == 0;
     }
 
     /** Returns n+1 in ordinary decimal arithmetic. */
@@ -510,17 +515,24 @@ public final class CarrylessArithmetic {
 
 
 
-    /** Adds every dismal prime with at most length(hi) digits to primeHash. */
-    private static void collectPrimes(Set<String> primeHash, String hi) {
-        int hilen = hi.length();
-        String x = "1";
+    /** Every dismal prime with at most primeCacheLen digits, kept across calls. */
+    private static final Set<String> primeCache = new HashSet<>();
+    private static int primeCacheLen = 0;
 
-        while (x.length() <= hilen) {
-            if (isDismalPrime(x)) {
-                primeHash.add(x);
+    /** Returns the set of all dismal primes with at most maxLen digits. */
+    private static synchronized Set<String> primesUpToLength(int maxLen) {
+        while (primeCacheLen < maxLen) {
+            int len = primeCacheLen + 1;
+            String x = len == 1 ? "1" : "1" + "0".repeat(len - 1);
+            while (x.length() == len) {
+                if (isDismalPrime(x)) {
+                    primeCache.add(x);
+                }
+                x = incrDigitNum(x);
             }
-            x = incrDigitNum(x);
+            primeCacheLen = len;
         }
+        return primeCache;
     }
 
     /** True if x <= hi as decimal numbers (both without leading zeros). */
@@ -539,11 +551,9 @@ public final class CarrylessArithmetic {
      * then one row per n (see helpDinfo for the columns).
      */
     public static String[][] dinfoTable(String lo, String hi, boolean primefields) {
-        Set<String> primeHash = new HashSet<>();
-
-        if (primefields) {
-            collectPrimes(primeHash, hi);
-        }
+        // Divisors of n never have more digits than n, so primes longer than
+        // hi in the shared cache can never match.
+        Set<String> primeHash = primefields ? primesUpToLength(hi.length()) : Set.of();
 
         List<String[]> rows = new ArrayList<>();
         String header =
