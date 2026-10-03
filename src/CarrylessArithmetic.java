@@ -29,7 +29,6 @@ Available operations (public static methods):
    pdinfo(a, b)             Returns info about prime divisors of n, a<=n<=b
    dinfoRange(a, b, false)  Prints info about divisors of n, a<=n<=b
    dinfoRange(a, b, true)   Prints info about prime divisors of n, a<=n<=b
-   helpDinfo()              Describes the output of dinfoRange
 
 The callback passed to dismalDivide / dismalDivisors receives each result
 once and returns an int; the returned ints are summed and handed back to
@@ -597,7 +596,7 @@ public final class CarrylessArithmetic {
 
     /**
      * Returns the dinfo/pdinfo table for lo <= n <= hi: row 0 is the header,
-     * then one row per n (see helpDinfo for the columns).
+     * then one row per n (the column names are listed in README.md).
      */
     public static String[][] dinfoTable(String lo, String hi, boolean primefields) {
         // Divisors of n never have more digits than n, so primes longer than
