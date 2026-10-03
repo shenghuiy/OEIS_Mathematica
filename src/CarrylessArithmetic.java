@@ -522,17 +522,15 @@ public final class CarrylessArithmetic {
     private static final Set<String> primeCache = new HashSet<>();
     private static int primeCacheLen = 0;
 
-    /** Returns the set of all dismal primes with at most maxLen digits. */
+    /**
+     * Returns the set of all dismal primes with at most maxLen digits, testing
+     * each new digit length in parallel (maxLen at most 18).
+     */
     private static synchronized Set<String> primesUpToLength(int maxLen) {
         while (primeCacheLen < maxLen) {
             int len = primeCacheLen + 1;
-            String x = len == 1 ? "1" : "1" + "0".repeat(len - 1);
-            while (x.length() == len) {
-                if (isDismalPrime(x)) {
-                    primeCache.add(x);
-                }
-                x = incrDigitNum(x);
-            }
+            String lo = len == 1 ? "1" : "1" + "0".repeat(len - 1);
+            primeCache.addAll(Arrays.asList(pPrimesRange(lo, "9".repeat(len))));
             primeCacheLen = len;
         }
         return primeCache;
