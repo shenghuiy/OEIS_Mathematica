@@ -40,15 +40,18 @@ the caller.  A negative return value aborts the search.
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ToIntFunction;
+import java.util.stream.LongStream;
 
 public final class CarrylessArithmetic {
 
     private CarrylessArithmetic() {}
 
-    static int nFound = 0;
-    static int nDeadEnd = 0;
-    static int ndup = 0;
+    // Search statistics; LongAdder so parallel searches can update them safely.
+    static final LongAdder nFound = new LongAdder();
+    static final LongAdder nDeadEnd = new LongAdder();
+    static final LongAdder ndup = new LongAdder();
 
     static final int DIV_PROD_MUL = 16;
 
@@ -106,11 +109,11 @@ public final class CarrylessArithmetic {
             while (start < len && res[start] == '0') start++;
             String s = new String(res, start, len - start);
             if (reshash.add(s)) {
-                nFound++;
+                nFound.increment();
                 nSol = callback.applyAsInt(s);
                 return nSol;
             } else {
-                ndup++;
+                ndup.increment();
                 return 0;
             }
         }
@@ -185,7 +188,7 @@ public final class CarrylessArithmetic {
                 }
             }
 
-            if (nCall == 0) nDeadEnd++;
+            if (nCall == 0) nDeadEnd.increment();
             return nSol;
         }
     }
@@ -309,7 +312,7 @@ public final class CarrylessArithmetic {
                 }
             }
 
-            if (nCall == 0) nDeadEnd++;
+            if (nCall == 0) nDeadEnd.increment();
 
             return nSol;
         }
@@ -632,21 +635,15 @@ public final class CarrylessArithmetic {
         return pCount;
     }
 
+    /**
+     * Returns the dismal primes in [lo,hi] in increasing order, testing the
+     * numbers in parallel. lo and hi must fit in a long (at most 18 digits).
+     */
     public static String[] pPrimesRange(String lo, String hi) {
-        List<String> primes = new ArrayList<>();
-        String x = lo;
-        int outputLength = lo.length();
-        while (notPast(x, hi)) {
-            if (isDismalPrime(x)) {
-                primes.add(x);          // record x before it is incremented
-            }
-            x = incrDigitNum(x);
-            if (x.length() > outputLength) {
-                // System.out.printf("%d primes with <= %d digits%n", primes.size(), outputLength);
-                // System.out.flush();
-                outputLength++;
-            }
-        }
-        return primes.toArray(new String[0]);
+        return LongStream.rangeClosed(Long.parseLong(lo), Long.parseLong(hi))
+                .parallel()
+                .mapToObj(Long::toString)
+                .filter(CarrylessArithmetic::isDismalPrime)
+                .toArray(String[]::new);
     }
 }
