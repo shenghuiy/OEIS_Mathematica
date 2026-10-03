@@ -2,7 +2,7 @@
 
 [![Java tests](https://github.com/shenghuiy/OEIS_Mathematica/actions/workflows/maven.yml/badge.svg?branch=main)](https://github.com/shenghuiy/OEIS_Mathematica/actions/workflows/maven.yml)
 
-High-performance Wolfram Language code for computing a difficult OEIS sequence — too long for the OEIS program section
+Code for exploring OEIS sequences, doing advanced math research, and having fun along the way.
 
 ## Documentation
 
