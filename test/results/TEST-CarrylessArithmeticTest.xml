@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="CarrylessArithmeticTest" time="1.291" tests="39" errors="0" skipped="0" failures="0">
+  <testcase name="divisions with no solution report none 1234 / 12 has no solution" classname="CarrylessArithmeticTest" time="0.034"/>
+  <testcase name="divisions with no solution report none 1234 / 56 has no solution" classname="CarrylessArithmeticTest" time="0.001"/>
+  <testcase name="divisions with no solution report none 12 / 1234 has no solution" classname="CarrylessArithmeticTest" time="0.01">
+    <system-err><![CDATA[result length -1 -> no solutions
+]]></system-err>
+  </testcase>
+  <testcase name="dismalDivide gives the C program&apos;s quotients, in the same order 11111 / 11" classname="CarrylessArithmeticTest" time="0.035"/>
+  <testcase name="dismalDivide gives the C program&apos;s quotients, in the same order 122 / 12" classname="CarrylessArithmeticTest" time="0.002"/>
+  <testcase name="dismalDivide gives the C program&apos;s quotients, in the same order 999 / 9" classname="CarrylessArithmeticTest" time="0.001"/>
+  <testcase name="incrDigitNum adds 1 in ordinary decimal 1 + 1 = 2" classname="CarrylessArithmeticTest" time="0.002"/>
+  <testcase name="incrDigitNum adds 1 in ordinary decimal 9 + 1 = 10" classname="CarrylessArithmeticTest" time="0.002"/>
+  <testcase name="incrDigitNum adds 1 in ordinary decimal 1999 + 1 = 2000" classname="CarrylessArithmeticTest" time="0.001"/>
+  <testcase name="incrDigitNum adds 1 in ordinary decimal 123 + 1 = 124" classname="CarrylessArithmeticTest" time="0.001"/>
+  <testcase name="pPrimesRange starts like OEIS A087097" classname="CarrylessArithmeticTest" time="0.012"/>
+  <testcase name="an empty pdinfo range gives only the header row" classname="CarrylessArithmeticTest" time="0.005"/>
+  <testcase name="pdinfo matches the C program pdinfo 1..2000" classname="CarrylessArithmeticTest" time="0.253"/>
+  <testcase name="pdinfo matches the C program pdinfo 11111..11111" classname="CarrylessArithmeticTest" time="0.157"/>
+  <testcase name="pdinfo matches the C program pdinfo 99990..100010" classname="CarrylessArithmeticTest" time="0.32"/>
+  <testcase name="pCountRange matches the C program&apos;s pcount 2291 primes in [1,20000]" classname="CarrylessArithmeticTest" time="0.026"/>
+  <testcase name="pCountRange matches the C program&apos;s pcount 1 primes in [100,199]" classname="CarrylessArithmeticTest" time="0.001"/>
+  <testcase name="pCountRange matches the C program&apos;s pcount 12583 primes in [123456,234567]" classname="CarrylessArithmeticTest" time="0.053"/>
+  <testcase name="pCountRange matches the C program&apos;s pcount 22095 primes in [1,99999]" classname="CarrylessArithmeticTest" time="0.043"/>
+  <testcase name="pCountRange matches the C program&apos;s pcount 0 primes in [50,10]" classname="CarrylessArithmeticTest" time="0.003"/>
+  <testcase name="every quotient multiplies back to the dividend 11 * c = 11111 for every quotient c" classname="CarrylessArithmeticTest" time="0.007"/>
+  <testcase name="every quotient multiplies back to the dividend 12 * c = 122 for every quotient c" classname="CarrylessArithmeticTest" time="0.002"/>
+  <testcase name="every quotient multiplies back to the dividend 9 * c = 999 for every quotient c" classname="CarrylessArithmeticTest" time="0.001"/>
+  <testcase name="dismalAdd matches the C program 123 + 4567 = 4567" classname="CarrylessArithmeticTest" time="0.001"/>
+  <testcase name="dismalAdd matches the C program 9 + 1 = 9" classname="CarrylessArithmeticTest" time="0.0"/>
+  <testcase name="dismalAdd matches the C program 1906 + 7 = 1907" classname="CarrylessArithmeticTest" time="0.001"/>
+  <testcase name="dismalMul matches the C program 17 * 24 = 124" classname="CarrylessArithmeticTest" time="0.001"/>
+  <testcase name="dismalMul matches the C program 123 * 456 = 12333" classname="CarrylessArithmeticTest" time="0.001"/>
+  <testcase name="dismalMul matches the C program 9 * 90 = 90" classname="CarrylessArithmeticTest" time="0.001"/>
+  <testcase name="dismalMul matches the C program 12 * 57 = 122" classname="CarrylessArithmeticTest" time="0.0"/>
+  <testcase name="dismalMul matches the C program 1906 * 2 = 1202" classname="CarrylessArithmeticTest" time="0.001"/>
+  <testcase name="dinfo 1..300 matches the C program" classname="CarrylessArithmeticTest" time="0.013"/>
+  <testcase name="an empty pPrimesRange range gives no primes" classname="CarrylessArithmeticTest" time="0.001"/>
+  <testcase name="pPrimesRange is increasing, agrees with pCountRange, and every prime contains a 9" classname="CarrylessArithmeticTest" time="0.12"/>
+  <testcase name="dismalDivisors gives the C program&apos;s divisors, in the same order divisors of 10" classname="CarrylessArithmeticTest" time="0.006"/>
+  <testcase name="dismalDivisors gives the C program&apos;s divisors, in the same order divisors of 1111" classname="CarrylessArithmeticTest" time="0.008"/>
+  <testcase name="dismalDivisors gives the C program&apos;s divisors, in the same order divisors of 1234" classname="CarrylessArithmeticTest" time="0.001"/>
+  <testcase name="dismalDivisors gives the C program&apos;s divisors, in the same order divisors of 98765" classname="CarrylessArithmeticTest" time="0.002"/>
+  <testcase name="a negative callback result stops the search at once" classname="CarrylessArithmeticTest" time="0.001"/>
+</testsuite>
