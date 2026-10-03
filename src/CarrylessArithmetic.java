@@ -40,8 +40,10 @@ the caller.  A negative return value aborts the search.
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.ToIntFunction;
+import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
 public final class CarrylessArithmetic {
@@ -208,10 +210,10 @@ public final class CarrylessArithmetic {
         /** Saved {index, old max} pairs, so max changes can be undone. */
         final Deque<int[]> amaxstack = new ArrayDeque<>();
         final Deque<int[]> bmaxstack = new ArrayDeque<>();
-        final Set<String> reshash = new HashSet<>();
+        final Set<String> reshash;
         final ToIntFunction<String> callback;
 
-        DivisorSearch(String num, ToIntFunction<String> callback) {
+        DivisorSearch(String num, ToIntFunction<String> callback, Set<String> reshash) {
             this.num = num;
             this.numLen = num.length();
             this.amin = new char[numLen];
@@ -221,6 +223,17 @@ public final class CarrylessArithmetic {
             this.numorder = new int[numLen + 1];
             this.res = new char[numLen];
             this.callback = callback;
+            this.reshash = reshash;
+
+            Arrays.fill(amin, '0');
+            Arrays.fill(amax, '9');
+            Arrays.fill(bmin, '0');
+            Arrays.fill(bmax, '9');
+            int j = 0;
+            for (int i = 0; 2 * i < numLen; i++) {
+                numorder[j++] = i;
+                numorder[j++] = numLen - 1 - i;
+            }
         }
 
         /**
@@ -383,18 +396,8 @@ public final class CarrylessArithmetic {
     /** Calls callback on every b such that b*c = num for some c. */
     public static int dismalDivisors(String num, ToIntFunction<String> callback) {
         int numLen = num.length();
-        DivisorSearch h = new DivisorSearch(num, callback);
+        DivisorSearch h = new DivisorSearch(num, callback, new HashSet<>());
         int nSol = 0;
-
-        Arrays.fill(h.amin, '0');
-        Arrays.fill(h.amax, '9');
-        Arrays.fill(h.bmin, '0');
-        Arrays.fill(h.bmax, '9');
-        int j = 0;
-        for (int i = 0; 2 * i < numLen; i++) {
-            h.numorder[j++] = i;
-            h.numorder[j++] = numLen - 1 - i;
-        }
 
         for (int i = 0; 2 * i < numLen; i++) {
             h.alen = i + 1;
@@ -479,6 +482,57 @@ public final class CarrylessArithmetic {
 
             return 0;
         }
+
+        /**
+         * Adds the divisors gathered in other (same num, disjoint divisors) to
+         * this one. Every field combines regardless of order: dismal + and *
+         * are associative and commutative, and the capped product is capped
+         * exactly when the full product would be.
+         */
+        DivInfo merge(DivInfo other) {
+            isPrime &= other.isPrime;
+            isPseudoprime &= other.isPseudoprime;
+            nDivisors += other.nDivisors;
+            nBoundedDivisors += other.nBoundedDivisors;
+            dismalSumDivisors = dismalAdd(dismalSumDivisors, other.dismalSumDivisors);
+            dismalSumBoundedDivisors = dismalAdd(dismalSumBoundedDivisors, other.dismalSumBoundedDivisors);
+            dismalSumBoundedDivisors2 = dismalAdd(dismalSumBoundedDivisors2, other.dismalSumBoundedDivisors2);
+            dismalSumNeDivisors = dismalAdd(dismalSumNeDivisors, other.dismalSumNeDivisors);
+            sumDivisors += other.sumDivisors;
+            sumBoundedDivisors += other.sumBoundedDivisors;
+            sumBoundedDivisors2 += other.sumBoundedDivisors2;
+            sumNeDivisors += other.sumNeDivisors;
+            nPrimeDivisors += other.nPrimeDivisors;
+            dismalSumPrimeDivisors = dismalAdd(dismalSumPrimeDivisors, other.dismalSumPrimeDivisors);
+            int cap = DIV_PROD_MUL * len;
+            if (dismalProdPrimeDivisors.length() + other.dismalProdPrimeDivisors.length() <= cap) {
+                dismalProdPrimeDivisors = dismalMul(dismalProdPrimeDivisors, other.dismalProdPrimeDivisors);
+            } else {
+                dismalProdPrimeDivisors = "9".repeat(cap);
+            }
+            return this;
+        }
+    }
+
+    /**
+     * Gathers the divisor info of num, searching each split of num into
+     * factor lengths (i+1, numLen-i) in parallel and merging the results.
+     */
+    private static DivInfo divisorInfo(String num, Set<String> primeHash) {
+        int numLen = num.length();
+        Set<String> reshash = ConcurrentHashMap.newKeySet();
+        return IntStream.range(0, (numLen + 1) / 2)
+                .parallel()
+                .mapToObj(i -> {
+                    DivInfo part = new DivInfo(num, primeHash);
+                    DivisorSearch h = new DivisorSearch(num, part::gatherInf, reshash);
+                    h.alen = i + 1;
+                    h.blen = numLen - i;
+                    h.work(0);
+                    return part;
+                })
+                .reduce(DivInfo::merge)
+                .orElseGet(() -> new DivInfo(num, primeHash));
     }
 
     /** Callback for dismalDivisors: 1 for a divisor of num other than num and 9. */
@@ -536,12 +590,6 @@ public final class CarrylessArithmetic {
         return primeCache;
     }
 
-    /** True if x <= hi as decimal numbers (both without leading zeros). */
-    private static boolean notPast(String x, String hi) {
-        return x.length() < hi.length()
-                || (x.length() == hi.length() && x.compareTo(hi) <= 0);
-    }
-
     /** Formats like C's printf("%.0f"): the exact integer value of d. */
     private static String fmt0(double d) {
         return new BigDecimal(d).setScale(0, java.math.RoundingMode.HALF_EVEN).toPlainString();
@@ -562,39 +610,40 @@ public final class CarrylessArithmetic {
         if (primefields) header += "|prime_divisors|sum_prime_divisors|prod_prime_divisors";
         rows.add(header.split("\\|"));
 
-        String x = lo;
-        while (notPast(x, hi)) {
-            DivInfo di = new DivInfo(x, primeHash);
-
-            dismalDivisors(x, di::gatherInf);
-            String x2 = dismalMul(x, "2");
-
-            List<String> row = new ArrayList<>(Arrays.asList(
-                    x,
-                    x.indexOf('9') >= 0 ? "1" : "0",
-                    di.isPrime ? "1" : "0",
-                    di.isPseudoprime ? "1" : "0",
-                    String.valueOf(di.nDivisors),
-                    String.valueOf(di.nBoundedDivisors),
-                    di.dismalSumDivisors,
-                    di.dismalSumBoundedDivisors,
-                    di.dismalSumBoundedDivisors2,
-                    di.dismalSumNeDivisors,
-                    x2,
-                    fmt0(di.sumDivisors),
-                    fmt0(di.sumBoundedDivisors),
-                    fmt0(di.sumBoundedDivisors2),
-                    fmt0(di.sumNeDivisors)));
-            if (primefields) {
-                row.add(String.valueOf(di.nPrimeDivisors));
-                row.add(di.dismalSumPrimeDivisors);
-                row.add(di.dismalProdPrimeDivisors);
-            }
-            rows.add(row.toArray(new String[0]));
-
-            x = incrDigitNum(x);
-        }
+        LongStream.rangeClosed(Long.parseLong(lo), Long.parseLong(hi))
+                .parallel()
+                .mapToObj(n -> dinfoRow(Long.toString(n), primeHash, primefields))
+                .forEachOrdered(rows::add);
         return rows.toArray(new String[0][]);
+    }
+
+    /** One dinfoTable row for x. */
+    private static String[] dinfoRow(String x, Set<String> primeHash, boolean primefields) {
+        DivInfo di = divisorInfo(x, primeHash);
+        String x2 = dismalMul(x, "2");
+
+        List<String> row = new ArrayList<>(Arrays.asList(
+                x,
+                x.indexOf('9') >= 0 ? "1" : "0",
+                di.isPrime ? "1" : "0",
+                di.isPseudoprime ? "1" : "0",
+                String.valueOf(di.nDivisors),
+                String.valueOf(di.nBoundedDivisors),
+                di.dismalSumDivisors,
+                di.dismalSumBoundedDivisors,
+                di.dismalSumBoundedDivisors2,
+                di.dismalSumNeDivisors,
+                x2,
+                fmt0(di.sumDivisors),
+                fmt0(di.sumBoundedDivisors),
+                fmt0(di.sumBoundedDivisors2),
+                fmt0(di.sumNeDivisors)));
+        if (primefields) {
+            row.add(String.valueOf(di.nPrimeDivisors));
+            row.add(di.dismalSumPrimeDivisors);
+            row.add(di.dismalProdPrimeDivisors);
+        }
+        return row.toArray(new String[0]);
     }
 
     /** Divisor info for lo <= n <= hi, as a table (C command: dinfo). */
