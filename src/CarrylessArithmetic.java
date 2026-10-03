@@ -616,23 +616,16 @@ public final class CarrylessArithmetic {
         }
     }
 
+    /**
+     * Counts the dismal primes in [lo,hi], testing the numbers in parallel.
+     * lo and hi must fit in a long (at most 18 digits).
+     */
     public static int pCountRange(String lo, String hi) {
-        String x = lo;
-        int pCount = 0;
-        int outputLength = lo.length();
-
-        while (notPast(x, hi)) {
-            if (isDismalPrime(x)) {
-                pCount++;
-            }
-            x = incrDigitNum(x);
-            if (x.length() > outputLength) {
-                // System.out.printf("%d primes with <= %d digits%n", pCount, outputLength);
-                // System.out.flush();
-                outputLength++;
-            }
-        }
-        return pCount;
+        return (int) LongStream.rangeClosed(Long.parseLong(lo), Long.parseLong(hi))
+                .parallel()
+                .mapToObj(Long::toString)
+                .filter(CarrylessArithmetic::isDismalPrime)
+                .count();
     }
 
     /**
