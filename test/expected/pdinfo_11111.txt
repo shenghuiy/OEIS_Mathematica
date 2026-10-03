@@ -1,0 +1,2 @@
+n|9ish|prime|pseudoprime|divisors|bd_divisors|dsum_divisors|dsum_bd_divisors|dsum_bd_divisors2|dsum_ne_divisors|2*n|sum_divisors|sum_bd_divisors|sum_bd_divisors2|sum_ne_divisors|prime_divisors|sum_prime_divisors|prod_prime_divisors
+11111|0|0|0|67968|8920|99999|19999|9999|99999|11111|3325061790|44605706|44594595|3325050679|14456|99999|99999999999999999999999999999999999999999999999999999999999999999999999999999999
