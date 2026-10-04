@@ -16,14 +16,14 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 /**
- * Tests for CarrylessArithmetic. The files in test/expected are the output of
+ * Tests for CarrylessArithmetic. The files in test/java/expected are the output of
  * the original C program (David Applegate, 2003) for the same inputs, so these
  * tests check the Java port against the reference implementation.
  */
 class CarrylessArithmeticTest {
 
     private static List<String> expected(String file) throws IOException {
-        return Files.readAllLines(Path.of("test", "expected", file));
+        return Files.readAllLines(Path.of("test", "java", "expected", file));
     }
 
     private static List<String> lines(String[][] table) {
