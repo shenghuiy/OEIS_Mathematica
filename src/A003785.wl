@@ -7,7 +7,7 @@ BeginPackage["OEIS`"];
 
 
 etaSeries::usage="etaSeries[k, nn] gives Prod_{m>=1}(1 - x^(k m)) as a polynomial in x, truncated after x^nn.";
-etaQuotientA::usage="etaQuotientA[n] gives the n-th term of the sequence defined by the translated PARI program (0 for n < 3).";
+A003785::usage="A003785[n] gives the n-th term of A003785 (0 for n < 3).";
 
 
 Begin["`Private`"];
@@ -16,7 +16,7 @@ Begin["`Private`"];
 etaSeries[k_Integer?Positive,nn_Integer?NonNegative]:=Normal@Series[QPochhammer[x^k,x^k,nn+1],{x,0,nn}]
 
 
-etaQuotientA[n_Integer]:=If[n<3,0,
+A003785[n_Integer]:=If[n<3,0,
   Module[{m=n-3,e1,e2,e4,A1},
     e1=etaSeries[1,m];e2=etaSeries[2,m];e4=etaSeries[4,m];
     A1=Series[(e2^3/e1/e4^2)^4,{x,0,m}];
