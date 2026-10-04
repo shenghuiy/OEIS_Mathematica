@@ -120,8 +120,8 @@ invSigmaDivisors[n_Integer?Positive, Optional[k_Integer?Positive, 1], u_ : Infin
     Developer`ToPackedArray[Flatten[groups[[All, All, 1]]], Integer],
     Developer`ToPackedArray[Flatten[groups[[All, All, 2]]], Integer],
     Developer`ToPackedArray[Prepend[1 + Accumulate[Length /@ groups], 1], Integer]];
-  With[{byOwner = GroupBy[pairs, First -> Last, Sort]},
-    Lookup[byOwner, Range[Length[divs]], {}]]
+  pairs = Sort[pairs];   (* packed lexicographic sort: by owner, then by x *)
+  TakeList[pairs[[All, 2]], BinCounts[pairs[[All, 1]], {1, Length[divs] + 1, 1}]]
 ]
 
 DivisorSigmaInverse[n_Integer?Positive, Optional[k_Integer?Positive, 1], u_ : Infinity] := Last[invSigmaDivisors[n, k, u]]
