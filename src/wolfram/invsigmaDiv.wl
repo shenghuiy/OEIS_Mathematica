@@ -41,7 +41,7 @@ cookSigma[n_Integer, k_Integer?Positive] := Module[{blocks},
 (*r[d] holds every x built from the primes processed so far with sigma_k(x) = d. Processing a prime starts from a copy t of r ("use no power of p") and, for each block {d, q}, adds r[m] q into t[m d] for every m with m d | n. Reading from r and writing to t uses each prime at most once.*)
 
 
-invSigmaDivisors[n_Integer?Positive, k_Integer?Positive : 1, u_ : Infinity] := Module[{divs, r, t},
+invSigmaDivisors[n_Integer?Positive, Optional[k_Integer?Positive, 1], u_ : Infinity] := Module[{divs, r, t},
   If[n == 1, Return[{{1}}]];
   divs = Divisors[n];
   r = AssociationMap[{} &, divs];
@@ -59,7 +59,7 @@ invSigmaDivisors[n_Integer?Positive, k_Integer?Positive : 1, u_ : Infinity] := M
   Lookup[r, divs]
 ]
 
-invSigma[n_Integer?Positive, k_Integer?Positive : 1, u_ : Infinity] := Last[invSigmaDivisors[n, k, u]]
+invSigma[n_Integer?Positive, Optional[k_Integer?Positive, 1], u_ : Infinity] := Last[invSigmaDivisors[n, k, u]]
 
 
 End[];
