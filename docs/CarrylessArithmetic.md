@@ -6,12 +6,58 @@ All numbers are passed and returned as decimal digit strings, such as `"1906"`.
 
 ## Build
 
-Requires Java 11 or later and Maven.
+### Requirements
+
+- Java 11 or later. Check with `java -version`.
+- Maven. Check with `mvn -version`. On macOS, `brew install maven` installs it, along with a Java runtime if you don't have one.
+
+The first build downloads JUnit and Maven's plugins, so it needs internet access. Later builds use the local Maven cache.
+
+### Building the jar
+
+From the repository root (the folder that contains `pom.xml`):
 
 ```bash
-mvn package    # compiles, runs the tests, builds target/carryless-arithmetic-1.0-SNAPSHOT.jar
-mvn test       # tests only
+mvn package
 ```
+
+This compiles `src/java/CarrylessArithmetic.java`, runs the tests, and writes the jar to:
+
+```
+target/carryless-arithmetic-1.0-SNAPSHOT.jar
+```
+
+The jar is about 15 KB and contains `CarrylessArithmetic.class` and its helper classes. If any test fails, Maven stops and does not build the jar.
+
+| Command | What it does |
+|---|---|
+| `mvn package` | Compile, run the tests, and build the jar |
+| `mvn package -DskipTests` | Build the jar without running the tests (faster) |
+| `mvn clean package` | Delete `target/` first, so nothing from an earlier build is left over |
+| `mvn test` | Compile and run the tests only, without building the jar |
+| `mvn -q package` | Any of the above with less output |
+
+### Using the jar
+
+**From Mathematica**, add the jar to J/Link's class path and load the class (see the full example below):
+
+```wolfram
+Needs["JLink`"];
+ReinstallJava[];
+AddToClassPath["/path/to/OEIS_Mathematica/target/carryless-arithmetic-1.0-SNAPSHOT.jar"];
+LoadJavaClass["CarrylessArithmetic"];
+```
+
+After rebuilding the jar, run `ReinstallJava[]` again before `AddToClassPath`: J/Link does not reload a class it has already loaded.
+
+**From Java**, put the jar on the class path of your own program:
+
+```bash
+javac -cp target/carryless-arithmetic-1.0-SNAPSHOT.jar MyProgram.java
+java -cp target/carryless-arithmetic-1.0-SNAPSHOT.jar:. MyProgram
+```
+
+On Windows, use `;` instead of `:` to separate class path entries. The jar has no `main` method, so it is a library to call from other code, not a program to run with `java -jar`.
 
 ## Methods
 
