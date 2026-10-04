@@ -7,7 +7,7 @@
 BeginPackage["OEIS`"];
 
 invSigmaDivisors::usage = "invSigmaDivisors[n, k, u] returns a list, indexed like Divisors[n], whose j-th entry is the sorted list of all x <= u with DivisorSigma[k, x] equal to the j-th divisor of n. k defaults to 1 and u to Infinity.";
-invSigma::usage = "invSigma[n, k, u] returns all x <= u with DivisorSigma[k, x] == n.";
+DivisorSigmaInverse::usage = "DivisorSigmaInverse[n, k, u] returns all x <= u with DivisorSigma[k, x] == n.";
 
 Begin["`Private`"];
 
@@ -59,7 +59,7 @@ invSigmaDivisors[n_Integer?Positive, Optional[k_Integer?Positive, 1], u_ : Infin
   Lookup[r, divs]
 ]
 
-invSigma[n_Integer?Positive, Optional[k_Integer?Positive, 1], u_ : Infinity] := Last[invSigmaDivisors[n, k, u]]
+DivisorSigmaInverse[n_Integer?Positive, Optional[k_Integer?Positive, 1], u_ : Infinity] := Last[invSigmaDivisors[n, k, u]]
 
 
 End[];
