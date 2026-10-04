@@ -45,8 +45,9 @@ dpCompiled = FunctionCompile @ Function[{
     Typed[divs, "PackedArray"["MachineInteger", 1]],
     Typed[bd, "PackedArray"["MachineInteger", 1]],
     Typed[bq, "PackedArray"["MachineInteger", 1]],
-    Typed[gstart, "PackedArray"["MachineInteger", 1]]},
-  Module[{nd = Length[divs], ng = Length[gstart] - 1, own, xs, nxt, head, cnt, d, q, nd1, m, i, x, tgt, lo, hi, mid, len},
+    Typed[gstart, "PackedArray"["MachineInteger", 1]],
+    Typed[sel, "MachineInteger"]},
+  Module[{nd = Length[divs], ng = Length[gstart] - 1, rows = 0, j = 0, res, own, xs, nxt, head, cnt, d, q, nd1, m, i, x, tgt, lo, hi, mid, len},
     own = Typed[CreateDataStructure["DynamicArray"], "DynamicArray"::["MachineInteger"]];
     xs = Typed[CreateDataStructure["DynamicArray"], "DynamicArray"::["MachineInteger"]];
     nxt = Typed[CreateDataStructure["DynamicArray"], "DynamicArray"::["MachineInteger"]];
@@ -83,7 +84,15 @@ dpCompiled = FunctionCompile @ Function[{
         {b, gstart[[g]], gstart[[g + 1]] - 1}],
       {g, 1, ng}];
     len = xs["Length"];
-    Table[If[c == 1, own["Part", i], xs["Part", i]], {i, 1, len}, {c, 1, 2}]
+    Do[If[sel == 0 || own["Part", i] == sel, rows = rows + 1], {i, 1, len}];
+    res = Table[0, {rows + 1}, {2}];   (* trailing {0, 0} row keeps the array non-empty *)
+    Do[
+      If[sel == 0 || own["Part", i] == sel,
+        j = j + 1;
+        res[[j, 1]] = own["Part", i];
+        res[[j, 2]] = xs["Part", i]],
+      {i, 1, len}];
+    res
   ]
 ];
 
@@ -109,22 +118,30 @@ invSigmaDivisorsInterpreted[n_Integer?Positive, k_Integer?Positive, u_] := Modul
   Lookup[r, divs]
 ]
 
-invSigmaDivisors[n_Integer?Positive, Optional[k_Integer?Positive, 1], u_ : Infinity] := Module[{divs, groups, bounded, pairs},
-  If[n == 1, Return[{{1}}]];
-  If[n >= 2^62, Return[invSigmaDivisorsInterpreted[n, k, u]]];
-  divs = Divisors[n];
-  groups = cookSigma[n, k];
-  bounded = Min[u, n];   (* x <= sigma_k(x)^(1/k) <= n *)
-  pairs = dpCompiled[n, bounded,
+(* Runs the compiled DP; sel = 0 returns all (divisor index, x) pairs, sel = j only those owned by divs[[j]]. *)
+sigmaPairs[n_Integer, k_Integer, u_, divs_List, sel_Integer] := Module[{groups = cookSigma[n, k]},
+  Most @ dpCompiled[n, Min[u, n],   (* x <= sigma_k(x)^(1/k) <= n *)
     Developer`ToPackedArray[divs, Integer],
     Developer`ToPackedArray[Flatten[groups[[All, All, 1]]], Integer],
     Developer`ToPackedArray[Flatten[groups[[All, All, 2]]], Integer],
-    Developer`ToPackedArray[Prepend[1 + Accumulate[Length /@ groups], 1], Integer]];
-  pairs = Sort[pairs];   (* packed lexicographic sort: by owner, then by x *)
+    Developer`ToPackedArray[Prepend[1 + Accumulate[Length /@ groups], 1], Integer],
+    sel]
+]
+
+invSigmaDivisors[n_Integer?Positive, Optional[k_Integer?Positive, 1], u_ : Infinity] := Module[{divs, pairs},
+  If[n == 1, Return[{{1}}]];
+  If[n >= 2^62, Return[invSigmaDivisorsInterpreted[n, k, u]]];
+  divs = Divisors[n];
+  pairs = Sort[sigmaPairs[n, k, u, divs, 0]];   (* packed lexicographic sort: by owner, then by x *)
   TakeList[pairs[[All, 2]], BinCounts[pairs[[All, 1]], {1, Length[divs] + 1, 1}]]
 ]
 
-DivisorSigmaInverse[n_Integer?Positive, Optional[k_Integer?Positive, 1], u_ : Infinity] := Last[invSigmaDivisors[n, k, u]]
+DivisorSigmaInverse[n_Integer?Positive, Optional[k_Integer?Positive, 1], u_ : Infinity] := Module[{divs},
+  If[n == 1, Return[{1}]];
+  If[n >= 2^62, Return[Last[invSigmaDivisorsInterpreted[n, k, u]]]];
+  divs = Divisors[n];
+  Sort[sigmaPairs[n, k, u, divs, Length[divs]][[All, 2]]]
+]
 
 
 End[];
