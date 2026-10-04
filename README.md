@@ -14,4 +14,4 @@ Explanations of the code in this repository are in [`docs/`](docs/README.md):
 - [A003785](docs/A003785.md): `src/wolfram/A003785.wl`, a Mathematica translation of the OEIS PARI program built from eta-function products.
 - [DivisorSigmaInverse](docs/DivisorSigmaInverse.md): `src/wolfram/DivisorSigmaInverse.wl`, a Mathematica port of `invsigmaDiv` from Max Alekseyev's `invphi.gp`; `invSigmaDivisors[n, k]` lists every x with σₖ(x) equal to each divisor of n, and `DivisorSigmaInverse[n, k]` gives the solutions for n itself.
 
-Tests for the Java code are described in [`test/java/README.md`](test/java/README.md).
+Tests for the Java code are described in [`test/java/README.md`](test/java/README.md), and tests for the Wolfram code in [`test/wolfram/README.md`](test/wolfram/README.md).
