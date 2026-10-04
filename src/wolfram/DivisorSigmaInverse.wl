@@ -38,11 +38,62 @@ cookSigma[n_Integer, k_Integer?Positive] := Module[{blocks},
 
 
 (* ::Text:: *)
-(*r[d] holds every x built from the primes processed so far with sigma_k(x) = d. Processing a prime starts from a copy t of r ("use no power of p") and, for each block {d, q}, adds r[m] q into t[m d] for every m with m d | n. Reading from r and writing to t uses each prime at most once.*)
+(*The table r[d] of the DP is stored flat: entry i is a pair (own[i], xs[i]) meaning "xs[i] has sigma_k equal to divs[[own[i]]]". Entries of the same owner are chained through nxt, with head[j] the newest entry of divs[[j]] (0 means none), so a block {d, q} only visits owners m that divide n/d. Unique factorization guarantees every x is produced exactly once, so no deduplication is needed. Processing a prime snapshots the current length cnt and skips entries beyond it, so each prime is used at most once. Every value is bounded by n, so machine integers cannot overflow when n < 2^62.*)
 
 
-invSigmaDivisors[n_Integer?Positive, Optional[k_Integer?Positive, 1], u_ : Infinity] := Module[{divs, r, t},
-  If[n == 1, Return[{{1}}]];
+dpCompiled = FunctionCompile @ Function[{
+    Typed[n, "MachineInteger"], Typed[u, "MachineInteger"],
+    Typed[divs, "PackedArray"["MachineInteger", 1]],
+    Typed[bd, "PackedArray"["MachineInteger", 1]],
+    Typed[bq, "PackedArray"["MachineInteger", 1]],
+    Typed[gstart, "PackedArray"["MachineInteger", 1]]},
+  Module[{nd = Length[divs], ng = Length[gstart] - 1, own, xs, nxt, head, cnt, d, q, nd1, m, i, x, tgt, lo, hi, mid, len},
+    own = Typed[CreateDataStructure["DynamicArray"], "DynamicArray"::["MachineInteger"]];
+    xs = Typed[CreateDataStructure["DynamicArray"], "DynamicArray"::["MachineInteger"]];
+    nxt = Typed[CreateDataStructure["DynamicArray"], "DynamicArray"::["MachineInteger"]];
+    head = Typed[CreateDataStructure["FixedArray", nd], "FixedArray"::["MachineInteger"]];
+    own["Append", 1];
+    xs["Append", 1];
+    nxt["Append", 0];
+    head["SetPart", 1, 1];
+    Do[
+      cnt = xs["Length"];
+      Do[
+        d = bd[[b]];
+        q = bq[[b]];
+        nd1 = Quotient[n, d];
+        Do[
+          m = divs[[j]];
+          If[Mod[nd1, m] == 0 && head["Part", j] != 0,
+            tgt = m d;
+            lo = 1; hi = nd;
+            While[lo < hi,
+              mid = Quotient[lo + hi, 2];
+              If[divs[[mid]] < tgt, lo = mid + 1, hi = mid]];
+            i = head["Part", j];
+            While[i != 0,
+              If[i <= cnt,
+                x = xs["Part", i] q;
+                If[x <= u,
+                  own["Append", lo];
+                  xs["Append", x];
+                  nxt["Append", head["Part", lo]];
+                  head["SetPart", lo, xs["Length"]]]];
+              i = nxt["Part", i]]],
+          {j, 1, nd}],
+        {b, gstart[[g]], gstart[[g + 1]] - 1}],
+      {g, 1, ng}];
+    len = xs["Length"];
+    Table[If[c == 1, own["Part", i], xs["Part", i]], {i, 1, len}, {c, 1, 2}]
+  ]
+];
+
+
+(* ::Text:: *)
+(*Original association-based DP, kept for n >= 2^62 where machine integers could overflow.*)
+
+
+invSigmaDivisorsInterpreted[n_Integer?Positive, k_Integer?Positive, u_] := Module[{divs, r, t},
   divs = Divisors[n];
   r = AssociationMap[{} &, divs];
   r[1] = {1};
@@ -57,6 +108,21 @@ invSigmaDivisors[n_Integer?Positive, Optional[k_Integer?Positive, 1], u_ : Infin
     r = t,
     {primeBlocks, cookSigma[n, k]}];
   Lookup[r, divs]
+]
+
+invSigmaDivisors[n_Integer?Positive, Optional[k_Integer?Positive, 1], u_ : Infinity] := Module[{divs, groups, bounded, pairs},
+  If[n == 1, Return[{{1}}]];
+  If[n >= 2^62, Return[invSigmaDivisorsInterpreted[n, k, u]]];
+  divs = Divisors[n];
+  groups = cookSigma[n, k];
+  bounded = Min[u, n];   (* x <= sigma_k(x)^(1/k) <= n *)
+  pairs = dpCompiled[n, bounded,
+    Developer`ToPackedArray[divs, Integer],
+    Developer`ToPackedArray[Flatten[groups[[All, All, 1]]], Integer],
+    Developer`ToPackedArray[Flatten[groups[[All, All, 2]]], Integer],
+    Developer`ToPackedArray[Prepend[1 + Accumulate[Length /@ groups], 1], Integer]];
+  With[{byOwner = GroupBy[pairs, First -> Last, Sort]},
+    Lookup[byOwner, Range[Length[divs]], {}]]
 ]
 
 DivisorSigmaInverse[n_Integer?Positive, Optional[k_Integer?Positive, 1], u_ : Infinity] := Last[invSigmaDivisors[n, k, u]]
