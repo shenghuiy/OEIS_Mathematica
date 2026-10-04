@@ -25,9 +25,9 @@
   </dependencies>
 
   <build>
-    <!-- Keep the existing layout: Java in src/java, Wolfram Language in src/wolfram, tests in test/ -->
+    <!-- Keep the existing layout: Java in src/java, Wolfram Language in src/wolfram, tests in test/java -->
     <sourceDirectory>src/java</sourceDirectory>
-    <testSourceDirectory>test</testSourceDirectory>
+    <testSourceDirectory>test/java</testSourceDirectory>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
