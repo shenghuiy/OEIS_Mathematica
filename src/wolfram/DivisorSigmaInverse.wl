@@ -23,9 +23,8 @@ Begin["`Private`"];
 cookSigma[n_Integer, k_Integer?Positive] := Module[{blocks},
   blocks = Flatten[
     Table[
-      With[{q = d (p^k - 1) + 1},
-        With[{t = IntegerExponent[q, p]},
-          If[t > k && Divisible[t, k] && q == p^t, {p, {d, p^(t/k - 1)}}, Nothing]]],
+      With[{q = d (p^k - 1) + 1}, {t = IntegerExponent[q, p]},
+        If[t > k && Divisible[t, k] && q == p^t, {p, {d, p^(t/k - 1)}}, Nothing]],
       {d, Rest[Divisors[n]]},
       {p, Select[First /@ FactorInteger[d - 1], # > 1 &]}],
     1];
