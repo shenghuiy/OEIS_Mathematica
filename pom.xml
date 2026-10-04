@@ -25,8 +25,8 @@
   </dependencies>
 
   <build>
-    <!-- Keep the existing layout: code in src/, tests in test/ -->
-    <sourceDirectory>src</sourceDirectory>
+    <!-- Keep the existing layout: Java in src/java, Wolfram Language in src/wolfram, tests in test/ -->
+    <sourceDirectory>src/java</sourceDirectory>
     <testSourceDirectory>test</testSourceDirectory>
     <plugins>
       <plugin>

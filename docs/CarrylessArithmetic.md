@@ -1,6 +1,6 @@
 # Carry-less (dismal) arithmetic in Java
 
-`src/CarrylessArithmetic.java` is a Java port of David Applegate's C program for dismal arithmetic (2003), now usually called lunar or carry-less arithmetic. Adding two numbers takes the larger digit in each position, and multiplying takes the smaller ([A087061](https://oeis.org/A087061), [A087062](https://oeis.org/A087062)); the primes are [A087097](https://oeis.org/A087097).
+`src/java/CarrylessArithmetic.java` is a Java port of David Applegate's C program for dismal arithmetic (2003), now usually called lunar or carry-less arithmetic. Adding two numbers takes the larger digit in each position, and multiplying takes the smaller ([A087061](https://oeis.org/A087061), [A087062](https://oeis.org/A087062)); the primes are [A087097](https://oeis.org/A087097).
 
 All numbers are passed and returned as decimal digit strings, such as `"1906"`.
 
