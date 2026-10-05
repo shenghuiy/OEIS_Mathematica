@@ -29,12 +29,41 @@ VerificationTest[
 ]
 
 
-(* More solutions than the initial bound of 1024, so the bound is doubled: every x is a solution and the list is sorted *)
+(* A case with many solutions (220281), all valid and sorted *)
 
 VerificationTest[
   Module[{n = 2^20 3^5 5^2 7, s},
     s = OEIS`EulerPhiInverse[n];
-    {Length[s] > 1024, s === Union[s], AllTrue[s, EulerPhi[#] == n &]}],
-  {True, True, True},
-  TestID -> "bound-doubling"
+    {Length[s], s === Union[s], AllTrue[s, EulerPhi[#] == n &]}],
+  {220281, True, True},
+  TestID -> "many-solutions"
+]
+
+
+(* Even n with no solution, and a large odd n, which is answered without compiling anything.
+   For n = 2 (2^31 - 1) the only primes q with q - 1 | n are 2 and 3, and EulerPhi[2^a 3^b] is never 2 p for an odd prime p. *)
+
+VerificationTest[OEIS`EulerPhiInverse[2 (2^31 - 1)], {}, TestID -> "large-even-no-solution"]
+VerificationTest[OEIS`EulerPhiInverse[3^35], {}, TestID -> "large-odd"]
+
+
+(* The Integer64 and Integer128 kernels give the same solutions *)
+
+VerificationTest[
+  AllTrue[{2, 24, 720720, 2^10 3^4 5^2 7 11 13, 2^20 3^5 5^2 7},
+    Sort[Rest[OEIS`Private`searchKernel["Integer64"][#]]] === Sort[Rest[OEIS`Private`searchKernel["Integer128"][#]]] &],
+  True,
+  TestID -> "int64-vs-int128"
+]
+
+
+(* n >= 2^58 uses the Integer128 kernel: the solutions include x0 and all satisfy phi(x) = n *)
+
+VerificationTest[
+  Module[{x0 = 2^61 3^2 5, n, s},
+    n = EulerPhi[x0];
+    s = OEIS`EulerPhiInverse[n];
+    {n >= 2^58, MemberQ[s, x0], s === Union[s], AllTrue[s, EulerPhi[#] == n &]}],
+  {True, True, True, True},
+  TestID -> "large-n-int128"
 ]

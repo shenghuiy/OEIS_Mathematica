@@ -9,39 +9,46 @@ EulerPhiInverse::usage = "EulerPhiInverse[n] returns the sorted list of all x wi
 Begin["`Private`"];
 
 
-cf2=FunctionCompile[Function[{Typed[n,"Integer128"],Typed[bound,"MachineInteger"]},Module[{ele,res,temp=TypeHint[0,"Integer128"],dfs,tot,fa,init1,init2},
-fa=CreateDataStructure["FixedArray",TypeHint[0,"Integer128"],bound];
-tot=ToRawPointer[TypeHint[0,"Integer64"]];
-dfs=Function[{
-Typed[x,"Integer128"],Typed[y,"Integer128"],
-Typed[ub,"MachineInteger"],
-Typed[pl,"ListVector"::["Integer128"]],
-Typed[increPt,"RawPointer"::["Integer64"]]},
-Module[{t1,t2,c,i},If[ub==-1,i=Length[pl],i=ub];
-While[i>=1&&FromRawPointer[tot]<bound,
-If[Mod[x,pl[[i]]-1]==0,
-t1=Quotient[x,(pl[[ i ]]-1)];
-t2=y;c=TypeHint[1,"Integer128"];
-While[FromRawPointer[tot]<bound&&Mod[t1,c]==0,
-t2*=pl[[ i ]];dfs[Quotient[t1,c],t2,i-1,pl,increPt];c*=pl[[ i ]]]];i--];If[FromRawPointer[tot]<bound&&x==1,
-ToRawPointer[tot,FromRawPointer[tot]+1];
-fa["SetPart",FromRawPointer[tot],y];,0;
-]]
-];
-If[OddQ[n],{fa,0},
-init1=Typed[KernelFunction[Divisors],{"Integer128"}->"ListVector"::["Integer128"]][n];
-init2=Select[init1,Typed[KernelFunction[PrimeQ],{"Integer128"}->"Boolean"][#+1]&];
-dfs[n,TypeHint[1,"Integer128"],-1,Map[#+1&,init2],tot];
-{fa,FromRawPointer[tot]}]]]]
+(* ::Subsection:: *)
+(*The compiled search*)
 
 
 (* ::Text:: *)
-(*Extract the values in the data structure*)
+(*If p^e divides x then p - 1 divides phi(x) = n, so only the primes p with p - 1 | n are candidates. The search is a depth-first walk over them from the largest down: with remaining target x and product y so far, a prime p with p - 1 | x divides x by p - 1, then for e = 1, 2, ... multiplies y by p and recurses on the quotient by p^(e-1) using only smaller primes. When the target reaches 1, y is a solution.*)
 
 
-cfExtract=FunctionCompile[Function[{Typed[arg1,"FixedArray"::["Integer128"]],Typed[arg2,"MachineInteger"]},
-If[arg2==0,{TypeHint[0,"Integer128"]},Take[arg1["Elements"],{1,arg2}]]
-]]
+(* ::Text:: *)
+(*Solutions are appended to a growable DynamicArray, so a single pass finds them all. The element type ty is a parameter: Integer64 is much faster than Integer128, and safe when n < 2^58, because then every solution x < 7.5 n < 2^63 and every intermediate product is at most 2 n. The result starts with a 0 so it is never empty (compiled code cannot return an empty array); callers drop it.*)
+
+
+makeSearch[ty_String] := With[{t = ty},
+  FunctionCompile[Function[{Typed[n, t]},
+    Module[{res, dfs, divs, primes},
+      res = Typed[CreateDataStructure["DynamicArray"], "DynamicArray"::[t]];
+      res["Append", TypeHint[0, t]];
+      dfs = Function[{Typed[x, t], Typed[y, t], Typed[ub, "MachineInteger"], Typed[pl, "ListVector"::[t]]},
+        Module[{t1, t2, c, i},
+          If[ub == -1, i = Length[pl], i = ub];
+          While[i >= 1,
+            If[Mod[x, pl[[i]] - 1] == 0,
+              t1 = Quotient[x, pl[[i]] - 1];
+              t2 = y; c = TypeHint[1, t];
+              While[Mod[t1, c] == 0,
+                t2 *= pl[[i]]; dfs[Quotient[t1, c], t2, i - 1, pl]; c *= pl[[i]]]];
+            i--];
+          If[x == 1, res["Append", y]; 0, 0]]];
+      If[EvenQ[n],
+        divs = Typed[KernelFunction[Divisors], {t} -> "ListVector"::[t]][n];
+        primes = Select[divs, Typed[KernelFunction[PrimeQ], {t} -> "Boolean"][# + 1] &];
+        dfs[n, TypeHint[1, t], -1, Map[# + 1 &, primes]]];
+      res["Elements"]]]]]
+
+
+(* ::Text:: *)
+(*Each kernel is compiled the first time it is needed, so loading the package is instant and a small n never pays for the Integer128 kernel.*)
+
+
+searchKernel[ty_String] := searchKernel[ty] = makeSearch[ty]
 
 
 (* ::Subsection:: *)
@@ -49,18 +56,15 @@ If[arg2==0,{TypeHint[0,"Integer128"]},Take[arg1["Elements"],{1,arg2}]]
 
 
 (* ::Text:: *)
-(*cf2 stops after bound solutions, so a returned count equal to bound may mean the list was cut off. The bound is doubled until the count falls strictly below it, then cfExtract reads the stored solutions. cfExtract returns {0} for a zero count, so that case is mapped to {}. EulerPhi[1] = EulerPhi[2] = 1, but cf2 returns nothing for odd n, so n = 1 is handled directly.*)
+(*EulerPhi[1] = EulerPhi[2] = 1, but phi(x) is even for x > 2, so every other odd n has no solution and is answered without compiling anything.*)
 
 
 EulerPhiInverse[1] := {1, 2}
 
-EulerPhiInverse[n_Integer?Positive] := Module[{bound = 1024, fa, count},
-  While[
-    {fa, count} = cf2[n, bound];
-    count >= bound,
-    bound *= 2];
-  If[count == 0, {}, Sort[cfExtract[fa, count]]]
-]
+EulerPhiInverse[n_Integer?Positive] := Which[
+  OddQ[n], {},
+  n < 2^58, Sort[Rest[searchKernel["Integer64"][n]]],
+  True, Sort[Rest[searchKernel["Integer128"][n]]]]
 
 
 End[];

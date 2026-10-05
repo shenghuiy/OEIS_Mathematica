@@ -19,7 +19,7 @@ These are not run by GitHub Actions, since the workflow has no Wolfram Engine.
 | File | Cases | What is checked |
 |---|---|---|
 | `DivisorSigmaInverse.wlt` | 26 | The examples in the doc page, known values, the bound `u`, agreement with brute force for `k = 1, 2, 3`, the compiled DP against the interpreted fallback, and the `n >= 2^62` path. |
-| `EulerPhiInverse.wlt` | 9 | Known values (including n = 1 and the no-solution cases), agreement with a table of `EulerPhi` for every n up to 4000, and a case with more than 1024 solutions that needs the bound doubled. |
+| `EulerPhiInverse.wlt` | 13 | Known values (including n = 1 and the no-solution cases), agreement with a table of `EulerPhi` for every n up to 4000, a case with 220,281 solutions, large even and odd n with no solution, the `Integer64` kernel against the `Integer128` kernel, and an n >= 2^58 that uses the `Integer128` kernel. |
 | `A399539.wlt` | 12 | The doc examples (including the 45 terms below 10^8, about 5 s), the first terms, an inclusive limit, a range spanning two sieve blocks, and a check from the definition psi - phi = d^4. |
 | `A157196.wlt` | 12 | The doc examples (193 terms form `a[7]`, density of 1s), the first terms, only 1s and 2s, strings that are prefixes of each other, and the minimal level. |
 | `A003785.wlt` | 9 | The 20 terms from the doc page, `etaSeries` against Euler's pentagonal theorem and the direct product, zero for `n < 3`, and regression values for the first terms. |
