@@ -22,6 +22,7 @@ Both 6 (divisors 1, 2, 3, 6) and 11 (divisors 1, 11) have σ₁ = 12.
 | Call | Returns |
 |---|---|
 | `DivisorSigmaInverse[n, k, u]` | The sorted list of all x ≤ u with `DivisorSigma[k, x] == n`. |
+| `DivisorSigmaInverseCount[n, k, u]` | The number of x ≤ u with `DivisorSigma[k, x] == n`, counted without building the list of solutions. |
 | `invSigmaDivisors[n, k, u]` | A list indexed like `Divisors[n]`: its j-th entry is the sorted list of all x ≤ u with `DivisorSigma[k, x]` equal to the j-th divisor of n. |
 
 `n` is a positive integer. `k` is a positive integer and defaults to 1; `u` defaults to `Infinity`. `DivisorSigmaInverse[n, k, u]` is the last entry of `invSigmaDivisors[n, k, u]`.
@@ -64,6 +65,8 @@ Run with local `wolframscript` (Mathematica 15.0.1, Apple silicon):
 ## Compiled kernel
 
 The DP kernel `dpCompiled` uses machine integers, which is safe because every x and every product formed is at most n; it is used for n < 2^62. Larger n fall back to the original association-based code (`invSigmaDivisorsInterpreted`).
+
+`dpCompiled` takes a final control input `countOnly`. When it is nonzero, solutions (entries owned by n itself, which the DP never extends) are counted instead of stored, and the kernel returns the single row `{count, 0}`. On n = 201180672000 (316,662 solutions) this takes about 0.10 s against about 0.18 s for the pairs mode. `DivisorSigmaInverseCount` uses it.
 
 - Compiling takes about 14 s each time the package is loaded.
 - On a 5,002-case comparison (k = 1, 2, 3, n up to 3000, plus two bounded cases) the compiled and original results were identical.

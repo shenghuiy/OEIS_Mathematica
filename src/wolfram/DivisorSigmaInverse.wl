@@ -8,6 +8,7 @@ BeginPackage["OEIS`"];
 
 invSigmaDivisors::usage = "invSigmaDivisors[n, k, u] returns a list, indexed like Divisors[n], whose j-th entry is the sorted list of all x <= u with DivisorSigma[k, x] equal to the j-th divisor of n. k defaults to 1 and u to Infinity.";
 DivisorSigmaInverse::usage = "DivisorSigmaInverse[n, k, u] returns all x <= u with DivisorSigma[k, x] == n.";
+DivisorSigmaInverseCount::usage = "DivisorSigmaInverseCount[n, k, u] returns the number of x <= u with DivisorSigma[k, x] == n, without building the list of solutions. k defaults to 1 and u to Infinity.";
 
 Begin["`Private`"];
 
@@ -37,7 +38,7 @@ cookSigma[n_Integer, k_Integer?Positive] := Module[{blocks},
 
 
 (* ::Text:: *)
-(*The table r[d] of the DP is stored flat: entry i is a pair (own[i], xs[i]) meaning "xs[i] has sigma_k equal to divs[[own[i]]]". Entries of the same owner are chained through nxt, with head[j] the newest entry of divs[[j]] (0 means none), so a block {d, q} only visits owners m that divide n/d. Unique factorization guarantees every x is produced exactly once, so no deduplication is needed. Processing a prime snapshots the current length cnt and skips entries beyond it, so each prime is used at most once. Every value is bounded by n, so machine integers cannot overflow when n < 2^62.*)
+(*The table r[d] of the DP is stored flat: entry i is a pair (own[i], xs[i]) meaning "xs[i] has sigma_k equal to divs[[own[i]]]". Entries of the same owner are chained through nxt, with head[j] the newest entry of divs[[j]] (0 means none), so a block {d, q} only visits owners m that divide n/d. Unique factorization guarantees every x is produced exactly once, so no deduplication is needed. Processing a prime snapshots the current length cnt and skips entries beyond it, so each prime is used at most once. Every value is bounded by n, so machine integers cannot overflow when n < 2^62. If countOnly is nonzero, entries owned by n itself (which are never extended) are counted in nsol instead of stored, and the result is the single row {nsol, 0}; sel is then ignored.*)
 
 
 dpCompiled = FunctionCompile @ Function[{
@@ -46,8 +47,8 @@ dpCompiled = FunctionCompile @ Function[{
     Typed[bd, "PackedArray"["MachineInteger", 1]],
     Typed[bq, "PackedArray"["MachineInteger", 1]],
     Typed[gstart, "PackedArray"["MachineInteger", 1]],
-    Typed[sel, "MachineInteger"]},
-  Module[{nd = Length[divs], ng = Length[gstart] - 1, rows = 0, j = 0, res, own, xs, nxt, head, cnt, d, q, nd1, m, i, x, tgt, lo, hi, mid, len},
+    Typed[sel, "MachineInteger"], Typed[countOnly, "MachineInteger"]},
+  Module[{nd = Length[divs], ng = Length[gstart] - 1, rows = 0, j = 0, nsol = 0, res, own, xs, nxt, head, cnt, d, q, nd1, m, i, x, tgt, lo, hi, mid, len},
     own = Typed[CreateDataStructure["DynamicArray"], "DynamicArray"::["MachineInteger"]];
     xs = Typed[CreateDataStructure["DynamicArray"], "DynamicArray"::["MachineInteger"]];
     nxt = Typed[CreateDataStructure["DynamicArray"], "DynamicArray"::["MachineInteger"]];
@@ -75,23 +76,28 @@ dpCompiled = FunctionCompile @ Function[{
               If[i <= cnt,
                 x = xs["Part", i] q;
                 If[x <= u,
-                  own["Append", lo];
-                  xs["Append", x];
-                  nxt["Append", head["Part", lo]];
-                  head["SetPart", lo, xs["Length"]]]];
+                  If[countOnly != 0 && lo == nd,
+                    nsol = nsol + 1,
+                    own["Append", lo];
+                    xs["Append", x];
+                    nxt["Append", head["Part", lo]];
+                    head["SetPart", lo, xs["Length"]]]]];
               i = nxt["Part", i]]],
           {j, 1, nd}],
         {b, gstart[[g]], gstart[[g + 1]] - 1}],
       {g, 1, ng}];
     len = xs["Length"];
-    Do[If[sel == 0 || own["Part", i] == sel, rows = rows + 1], {i, 1, len}];
-    res = Table[0, {rows + 1}, {2}];   (* trailing {0, 0} row keeps the array non-empty *)
-    Do[
-      If[sel == 0 || own["Part", i] == sel,
-        j = j + 1;
-        res[[j, 1]] = own["Part", i];
-        res[[j, 2]] = xs["Part", i]],
-      {i, 1, len}];
+    If[countOnly != 0,
+      res = Table[0, {1}, {2}];
+      res[[1, 1]] = nsol,
+      Do[If[sel == 0 || own["Part", i] == sel, rows = rows + 1], {i, 1, len}];
+      res = Table[0, {rows + 1}, {2}];   (* trailing {0, 0} row keeps the array non-empty *)
+      Do[
+        If[sel == 0 || own["Part", i] == sel,
+          j = j + 1;
+          res[[j, 1]] = own["Part", i];
+          res[[j, 2]] = xs["Part", i]],
+        {i, 1, len}]];
     res
   ]
 ];
@@ -118,21 +124,22 @@ invSigmaDivisorsInterpreted[n_Integer?Positive, k_Integer?Positive, u_] := Modul
   Lookup[r, divs]
 ]
 
-(* Runs the compiled DP; sel = 0 returns all (divisor index, x) pairs, sel = j only those owned by divs[[j]]. *)
-sigmaPairs[n_Integer, k_Integer, u_, divs_List, sel_Integer] := Module[{groups = cookSigma[n, k]},
-  Most @ dpCompiled[n, Min[u, n],   (* x <= sigma_k(x)^(1/k) <= n *)
+(* Runs the compiled DP. With countOnly = 0, sel = 0 returns all (divisor index, x) pairs and sel = j only those owned
+   by divs[[j]], followed by a {0, 0} row that callers drop with Most; with countOnly = 1 it returns {{count, 0}}. *)
+runDP[n_Integer, k_Integer, u_, divs_List, sel_Integer, countOnly_Integer] := Module[{groups = cookSigma[n, k]},
+  dpCompiled[n, Min[u, n],   (* x <= sigma_k(x)^(1/k) <= n *)
     Developer`ToPackedArray[divs, Integer],
     Developer`ToPackedArray[Flatten[groups[[All, All, 1]]], Integer],
     Developer`ToPackedArray[Flatten[groups[[All, All, 2]]], Integer],
     Developer`ToPackedArray[Prepend[1 + Accumulate[Length /@ groups], 1], Integer],
-    sel]
+    sel, countOnly]
 ]
 
 invSigmaDivisors[n_Integer?Positive, Optional[k_Integer?Positive, 1], u_ : Infinity] := Module[{divs, pairs},
   If[n == 1, Return[{{1}}]];
   If[n >= 2^62, Return[invSigmaDivisorsInterpreted[n, k, u]]];
   divs = Divisors[n];
-  pairs = Sort[sigmaPairs[n, k, u, divs, 0]];   (* packed lexicographic sort: by owner, then by x *)
+  pairs = Sort[Most @ runDP[n, k, u, divs, 0, 0]];   (* packed lexicographic sort: by owner, then by x *)
   TakeList[pairs[[All, 2]], BinCounts[pairs[[All, 1]], {1, Length[divs] + 1, 1}]]
 ]
 
@@ -140,8 +147,14 @@ DivisorSigmaInverse[n_Integer?Positive, Optional[k_Integer?Positive, 1], u_ : In
   If[n == 1, Return[{1}]];
   If[n >= 2^62, Return[Last[invSigmaDivisorsInterpreted[n, k, u]]]];
   divs = Divisors[n];
-  Sort[sigmaPairs[n, k, u, divs, Length[divs]][[All, 2]]]
+  Sort[Most[runDP[n, k, u, divs, Length[divs], 0]][[All, 2]]]
 ]
+
+DivisorSigmaInverseCount[n_Integer?Positive, Optional[k_Integer?Positive, 1], u_ : Infinity] :=
+  Which[
+    n == 1, 1,
+    n >= 2^62, Length[Last[invSigmaDivisorsInterpreted[n, k, u]]],
+    True, runDP[n, k, u, Divisors[n], 0, 1][[1, 1]]]
 
 
 End[];
