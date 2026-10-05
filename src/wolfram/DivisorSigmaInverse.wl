@@ -38,7 +38,7 @@ cookSigma[n_Integer, k_Integer?Positive] := Module[{blocks},
 
 
 (* ::Text:: *)
-(*The table r[d] of the DP is stored flat: entry i is a pair (own[i], xs[i]) meaning "xs[i] has sigma_k equal to divs[[own[i]]]". Entries of the same owner are chained through nxt, with head[j] the newest entry of divs[[j]] (0 means none), so a block {d, q} only visits owners m that divide n/d. Unique factorization guarantees every x is produced exactly once, so no deduplication is needed. Processing a prime snapshots the current length cnt and skips entries beyond it, so each prime is used at most once. Every value is bounded by n, so machine integers cannot overflow when n < 2^62. If countOnly is nonzero, entries owned by n itself (which are never extended) are counted in nsol instead of stored, and the result is the single row {nsol, 0}; sel is then ignored.*)
+(*The table r[d] of the DP is stored flat: entry i is a pair (own[i], xs[i]) meaning "xs[i] has sigma_k equal to divs[[own[i]]]". Entries of the same owner are chained through nxt, with head[j] the newest entry of divs[[j]] (0 means none), so a block {d, q} only visits owners m that divide n/d. Unique factorization guarantees every x is produced exactly once, so no deduplication is needed. Processing a prime snapshots the current length cnt and skips entries beyond it, so each prime is used at most once. Every value is bounded by n, so machine integers cannot overflow when n < 2^62. If countOnly is True the result is the single row {nsol, 0} and sel is ignored. With no bound (u >= n) the DP then runs on counts alone: r[j] is the number of x with sigma_k(x) = divs[[j]], so no x is ever built. With a bound, entries owned by n itself (which are never extended) are counted in nsol instead of stored.*)
 
 
 dpCompiled = FunctionCompile @ Function[{
@@ -47,8 +47,8 @@ dpCompiled = FunctionCompile @ Function[{
     Typed[bd, "PackedArray"["MachineInteger", 1]],
     Typed[bq, "PackedArray"["MachineInteger", 1]],
     Typed[gstart, "PackedArray"["MachineInteger", 1]],
-    Typed[sel, "MachineInteger"], Typed[countOnly, "MachineInteger"]},
-  Module[{nd = Length[divs], ng = Length[gstart] - 1, rows = 0, j = 0, nsol = 0, res, own, xs, nxt, head, cnt, d, q, nd1, m, i, x, tgt, lo, hi, mid, len},
+    Typed[sel, "MachineInteger"], Typed[countOnly, "Boolean"]},
+  Module[{nd = Length[divs], ng = Length[gstart] - 1, rows = 0, j = 0, nsol = 0, r, t, res, own, xs, nxt, head, cnt, d, q, nd1, m, i, x, tgt, lo, hi, mid, len},
     own = Typed[CreateDataStructure["DynamicArray"], "DynamicArray"::["MachineInteger"]];
     xs = Typed[CreateDataStructure["DynamicArray"], "DynamicArray"::["MachineInteger"]];
     nxt = Typed[CreateDataStructure["DynamicArray"], "DynamicArray"::["MachineInteger"]];
@@ -57,37 +57,60 @@ dpCompiled = FunctionCompile @ Function[{
     xs["Append", 1];
     nxt["Append", 0];
     head["SetPart", 1, 1];
-    Do[
-      cnt = xs["Length"];
+    If[countOnly && u >= n,
+      r = Typed[CreateDataStructure["FixedArray", nd], "FixedArray"::["MachineInteger"]];
+      t = Typed[CreateDataStructure["FixedArray", nd], "FixedArray"::["MachineInteger"]];
+      r["SetPart", 1, 1];
       Do[
-        d = bd[[b]];
-        q = bq[[b]];
-        nd1 = Quotient[n, d];
+        Do[t["SetPart", j, r["Part", j]], {j, 1, nd}];
         Do[
-          m = divs[[j]];
-          If[Mod[nd1, m] == 0 && head["Part", j] != 0,
-            tgt = m d;
-            lo = 1; hi = nd;
-            While[lo < hi,
-              mid = Quotient[lo + hi, 2];
-              If[divs[[mid]] < tgt, lo = mid + 1, hi = mid]];
-            i = head["Part", j];
-            While[i != 0,
-              If[i <= cnt,
-                x = xs["Part", i] q;
-                If[x <= u,
-                  If[countOnly != 0 && lo == nd,
-                    nsol = nsol + 1,
-                    own["Append", lo];
-                    xs["Append", x];
-                    nxt["Append", head["Part", lo]];
-                    head["SetPart", lo, xs["Length"]]]]];
-              i = nxt["Part", i]]],
-          {j, 1, nd}],
-        {b, gstart[[g]], gstart[[g + 1]] - 1}],
-      {g, 1, ng}];
+          d = bd[[b]];
+          nd1 = Quotient[n, d];
+          Do[
+            m = divs[[j]];
+            If[Mod[nd1, m] == 0 && r["Part", j] != 0,
+              tgt = m d;
+              lo = 1; hi = nd;
+              While[lo < hi,
+                mid = Quotient[lo + hi, 2];
+                If[divs[[mid]] < tgt, lo = mid + 1, hi = mid]];
+              t["SetPart", lo, t["Part", lo] + r["Part", j]]],
+            {j, 1, nd}],
+          {b, gstart[[g]], gstart[[g + 1]] - 1}];
+        Do[r["SetPart", j, t["Part", j]], {j, 1, nd}],
+        {g, 1, ng}];
+      nsol = r["Part", nd],
+      Do[
+        cnt = xs["Length"];
+        Do[
+          d = bd[[b]];
+          q = bq[[b]];
+          nd1 = Quotient[n, d];
+          Do[
+            m = divs[[j]];
+            If[Mod[nd1, m] == 0 && head["Part", j] != 0,
+              tgt = m d;
+              lo = 1; hi = nd;
+              While[lo < hi,
+                mid = Quotient[lo + hi, 2];
+                If[divs[[mid]] < tgt, lo = mid + 1, hi = mid]];
+              i = head["Part", j];
+              While[i != 0,
+                If[i <= cnt,
+                  x = xs["Part", i] q;
+                  If[x <= u,
+                    If[countOnly && lo == nd,
+                      nsol = nsol + 1,
+                      own["Append", lo];
+                      xs["Append", x];
+                      nxt["Append", head["Part", lo]];
+                      head["SetPart", lo, xs["Length"]]]]];
+                i = nxt["Part", i]]],
+            {j, 1, nd}],
+          {b, gstart[[g]], gstart[[g + 1]] - 1}],
+        {g, 1, ng}]];
     len = xs["Length"];
-    If[countOnly != 0,
+    If[countOnly,
       res = Table[0, {1}, {2}];
       res[[1, 1]] = nsol,
       Do[If[sel == 0 || own["Part", i] == sel, rows = rows + 1], {i, 1, len}];
@@ -124,9 +147,9 @@ invSigmaDivisorsInterpreted[n_Integer?Positive, k_Integer?Positive, u_] := Modul
   Lookup[r, divs]
 ]
 
-(* Runs the compiled DP. With countOnly = 0, sel = 0 returns all (divisor index, x) pairs and sel = j only those owned
-   by divs[[j]], followed by a {0, 0} row that callers drop with Most; with countOnly = 1 it returns {{count, 0}}. *)
-runDP[n_Integer, k_Integer, u_, divs_List, sel_Integer, countOnly_Integer] := Module[{groups = cookSigma[n, k]},
+(* Runs the compiled DP. With countOnly = False, sel = 0 returns all (divisor index, x) pairs and sel = j only those owned
+   by divs[[j]], followed by a {0, 0} row that callers drop with Most; with countOnly = True it returns {{count, 0}}. *)
+runDP[n_Integer, k_Integer, u_, divs_List, sel_Integer, countOnly_] := Module[{groups = cookSigma[n, k]},
   dpCompiled[n, Min[u, n],   (* x <= sigma_k(x)^(1/k) <= n *)
     Developer`ToPackedArray[divs, Integer],
     Developer`ToPackedArray[Flatten[groups[[All, All, 1]]], Integer],
@@ -139,7 +162,7 @@ invSigmaDivisors[n_Integer?Positive, Optional[k_Integer?Positive, 1], u_ : Infin
   If[n == 1, Return[{{1}}]];
   If[n >= 2^62, Return[invSigmaDivisorsInterpreted[n, k, u]]];
   divs = Divisors[n];
-  pairs = Sort[Most @ runDP[n, k, u, divs, 0, 0]];   (* packed lexicographic sort: by owner, then by x *)
+  pairs = Sort[Most @ runDP[n, k, u, divs, 0, False]];   (* packed lexicographic sort: by owner, then by x *)
   TakeList[pairs[[All, 2]], BinCounts[pairs[[All, 1]], {1, Length[divs] + 1, 1}]]
 ]
 
@@ -147,14 +170,14 @@ DivisorSigmaInverse[n_Integer?Positive, Optional[k_Integer?Positive, 1], u_ : In
   If[n == 1, Return[{1}]];
   If[n >= 2^62, Return[Last[invSigmaDivisorsInterpreted[n, k, u]]]];
   divs = Divisors[n];
-  Sort[Most[runDP[n, k, u, divs, Length[divs], 0]][[All, 2]]]
+  Sort[Most[runDP[n, k, u, divs, Length[divs], False]][[All, 2]]]
 ]
 
 DivisorSigmaInverseCount[n_Integer?Positive, Optional[k_Integer?Positive, 1], u_ : Infinity] :=
   Which[
     n == 1, 1,
     n >= 2^62, Length[Last[invSigmaDivisorsInterpreted[n, k, u]]],
-    True, runDP[n, k, u, Divisors[n], 0, 1][[1, 1]]]
+    True, runDP[n, k, u, Divisors[n], 0, True][[1, 1]]]
 
 
 End[];

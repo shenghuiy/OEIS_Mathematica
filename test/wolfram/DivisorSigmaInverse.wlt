@@ -89,7 +89,7 @@ VerificationTest[Length[OEIS`DivisorSigmaInverse[10!]], 1195, TestID -> "example
 VerificationTest[OEIS`DivisorSigmaInverse[1000], {}, TestID -> "example-1000-no-solution"]
 
 
-(* dpCompiled with countOnly set returns the solution count as the single row {count, 0} *)
+(* dpCompiled with countOnly True returns the solution count as the single row {count, 0} *)
 
 VerificationTest[
   countOnly[n_, k_] := Module[{groups = OEIS`Private`cookSigma[n, k]},
@@ -98,7 +98,7 @@ VerificationTest[
       Developer`ToPackedArray[Flatten[groups[[All, All, 1]]], Integer],
       Developer`ToPackedArray[Flatten[groups[[All, All, 2]]], Integer],
       Developer`ToPackedArray[Prepend[1 + Accumulate[Length /@ groups], 1], Integer],
-      0, 1]];
+      0, True]];
   countOnly[24, 1],
   {{3, 0}},
   TestID -> "count-only-24"
