@@ -4,6 +4,8 @@
 
 Code for exploring OEIS sequences, doing advanced math research, and having fun along the way.
 
+<p align="center"><img src="docs/img/PellLucas.png" alt="Pell-Lucas tree drawn in a circle" width="420"></p>
+
 ## Documentation
 
 Explanations of the code in this repository are in [`docs/`](docs/README.md):
