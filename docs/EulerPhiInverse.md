@@ -37,7 +37,7 @@ OEIS`EulerPhiInverse[3]    (* {}: φ(x) is even for x > 2 *)
 ## How it works
 
 1. **Candidate primes.** If p^e divides x, then φ(p^e) = p^(e−1) (p − 1) divides φ(x) = n, so p − 1 divides n. The compiled kernel takes the divisors d of n with d + 1 prime, giving the primes p = d + 1.
-2. **Depth-first search.** Starting from the largest candidate prime, the search keeps the remaining target `x` (initially n) and the product `y` built so far. For a prime p with p − 1 dividing x, it divides x by p − 1, then for e = 1, 2, … multiplies y by p and recurses on the quotient by p^(e−1), using only smaller primes, for as long as p^(e−1) still divides the remaining quotient. When the remaining target reaches 1, `y` is a solution.
+2. **Depth-first search.** Starting from the largest candidate prime, the search keeps the remaining target `x` (initially n) and the product `y` built so far. For a prime p with p − 1 dividing x, it divides x by p − 1, then for e = 1, 2, … multiplies y by p and recurses on the quotient by p^(e−1), using only smaller primes, for as long as p^(e−1) still divides the remaining quotient. When the remaining target reaches 1, `y` is a solution. A recursive call is made only when the quotient can still be completed: a quotient of 1 is recorded on the spot (together with 2y when the prime 2 is still unused, since φ(2) = 1), while an odd quotient above 1, or any quotient once no smaller primes are left, is a dead end and is skipped. This removes about 85% of the nodes visited.
 3. **One pass.** Solutions are appended to a growable `DynamicArray`, so a single search finds all of them. The array starts with a 0, because compiled code cannot return an empty array; `EulerPhiInverse` drops it and sorts the rest.
 4. **Two integer widths.** The kernel is built for `Integer64` when n < 2^58 and for `Integer128` otherwise. For n < 2^58 every solution is below 7.5 n < 2^63 and every intermediate product is at most 2 n, so 64-bit arithmetic is safe, and it is about twice as fast as 128-bit. Each version is compiled on first use.
 
@@ -53,7 +53,7 @@ Run with local `wolframscript` (Mathematica 15.0.1, Apple silicon):
 
 | n | solutions | time |
 |---|---|---|
-| 2^20 3^5 5^2 7 | 220,281 | 0.084 s |
-| 2^10 3^4 5^2 7 11 13 | 99,969 | 0.048 s |
-| 2^40 3^10 | 327,601 | 0.16 s |
-| 720720 | 308 | 0.26 ms |
+| 2^20 3^5 5^2 7 | 220,281 | 0.059 s |
+| 2^10 3^4 5^2 7 11 13 | 99,969 | 0.035 s |
+| 2^40 3^10 | 327,601 | 0.094 s |
+| 720720 | 308 | 0.20 ms |
