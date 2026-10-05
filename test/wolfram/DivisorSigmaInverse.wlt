@@ -87,3 +87,47 @@ VerificationTest[
 
 VerificationTest[Length[OEIS`DivisorSigmaInverse[10!]], 1195, TestID -> "example-10-factorial"]
 VerificationTest[OEIS`DivisorSigmaInverse[1000], {}, TestID -> "example-1000-no-solution"]
+
+
+(* dpCompiled with countOnly set returns the solution count as the single row {count, 0} *)
+
+VerificationTest[
+  countOnly[n_, k_] := Module[{groups = OEIS`Private`cookSigma[n, k]},
+    OEIS`Private`dpCompiled[n, n,
+      Developer`ToPackedArray[Divisors[n], Integer],
+      Developer`ToPackedArray[Flatten[groups[[All, All, 1]]], Integer],
+      Developer`ToPackedArray[Flatten[groups[[All, All, 2]]], Integer],
+      Developer`ToPackedArray[Prepend[1 + Accumulate[Length /@ groups], 1], Integer],
+      0, 1]];
+  countOnly[24, 1],
+  {{3, 0}},
+  TestID -> "count-only-24"
+]
+
+VerificationTest[
+  And @@ Flatten[Table[
+    countOnly[n, k][[1, 1]] === Length[OEIS`DivisorSigmaInverse[n, k]],
+    {k, 1, 3}, {n, 2, 500}]],
+  True,
+  TestID -> "count-only-matches-length"
+]
+
+
+(* DivisorSigmaInverseCount agrees with the length of DivisorSigmaInverse *)
+
+VerificationTest[OEIS`DivisorSigmaInverseCount[24], 3, TestID -> "count-24"]
+VerificationTest[OEIS`DivisorSigmaInverseCount[1], 1, TestID -> "count-1"]
+VerificationTest[OEIS`DivisorSigmaInverseCount[2], 0, TestID -> "count-no-solution"]
+VerificationTest[OEIS`DivisorSigmaInverseCount[60, 1, 40], 2, TestID -> "count-bound-u"]
+VerificationTest[
+  And @@ Flatten[Table[
+    OEIS`DivisorSigmaInverseCount[n, k] === Length[OEIS`DivisorSigmaInverse[n, k]],
+    {k, 1, 3}, {n, 1, 500}]],
+  True,
+  TestID -> "count-matches-length"
+]
+VerificationTest[
+  OEIS`DivisorSigmaInverseCount[DivisorSigma[1, 2^70 + 1]] === Length[OEIS`DivisorSigmaInverse[DivisorSigma[1, 2^70 + 1]]],
+  True,
+  TestID -> "count-large-n-fallback"
+]
