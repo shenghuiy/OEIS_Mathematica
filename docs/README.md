@@ -9,6 +9,7 @@ Explanations of the code in this repository, one page per component.
 | [A157196: self-describing sequence of 1s and 2s](A157196.md) | `src/wolfram/A157196.wl`: the sequence, loading and calling it, the string construction behind it, and the checks run in Mathematica |
 | [A003785: eta-quotient sequence](A003785.md) | `src/wolfram/A003785.wl`: the translation of the OEIS PARI program, how PARI's `eta` maps to `QPochhammer`, and how to check it |
 | [DivisorSigmaInverse: σₖ(x) = n](DivisorSigmaInverse.md) | `src/wolfram/DivisorSigmaInverse.wl`: finding every x with σₖ(x) = n, loading and calling it, the divisor dynamic program behind it, and the checks run in Mathematica |
+| [EulerPhiInverse: φ(x) = n](EulerPhiInverse.md) | `src/wolfram/EulerPhiInverse.wl`: finding every x with φ(x) = n, loading and calling it, the compiled depth-first search behind it, and the checks run in Mathematica |
 
 Related:
 
