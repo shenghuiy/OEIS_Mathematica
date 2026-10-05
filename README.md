@@ -4,7 +4,12 @@
 
 Code for exploring OEIS sequences, doing advanced math research, and having fun along the way.
 
-<p align="center"><img src="docs/img/PellLucas.png" alt="Pell-Lucas tree drawn in a circle" width="420"></p>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/img/banner-dark.png">
+    <img src="docs/img/banner-light.png" alt="Mathematical Explorations: research code for OEIS sequences, with the A001333 Pell-Lucas tree" width="100%">
+  </picture>
+</p>
 
 ## Documentation
 
