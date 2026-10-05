@@ -21,15 +21,64 @@ Begin["`Private`"];
 (*For each divisor d > 1 of n, find every prime p and exponent m with DivisorSigma[k, p^m] == d. Since p divides d - 1, it suffices to factor d - 1: set q = d (p^k - 1) + 1, which must be an exact power p^t with k | t, and then m = t/k - 1. The result is a list with one entry per prime p, each entry being a list of blocks {d, p^m}.*)
 
 
-cookSigma[n_Integer, k_Integer?Positive] := Module[{blocks},
+(* ::Text:: *)
+(*oddPrimes[x] lists the prime factors of x (none for x = 1), the only candidates p since sigma_k(p^m) = 1 mod p. The test for a pair (d, p) is compiled for n < 2^62. It never forms q: it climbs s = sigma_k(p^m) = 1 + p^k + ... + p^(m k) term by term, stopping as soon as s reaches d, with every product guarded against overflow. Larger n use cookSigmaInterpreted, which does the same test with exact integers.*)
+
+
+oddPrimes[x_Integer] := If[x == 1, {}, FactorInteger[x][[All, 1]]]
+
+cookSigmaInterpreted[n_Integer, k_Integer?Positive] := Module[{blocks},
   blocks = Flatten[
     Table[
       With[{q = d (p^k - 1) + 1}, {t = IntegerExponent[q, p]},
         If[t > k && Divisible[t, k] && q == p^t, {p, {d, p^(t/k - 1)}}, Nothing]],
       {d, Rest[Divisors[n]]},
-      {p, Select[First /@ FactorInteger[d - 1], # > 1 &]}],
+      {p, oddPrimes[d - 1]}],
     1];
   Values[GroupBy[blocks, First -> Last]]
+]
+
+(* Rows {p, d, p^m} for every pair (dd[[i]], pp[[i]]) with sigma_k(p^m) = d for some m >= 1, in input order, followed by a {0, 0, 0} row. *)
+blockRows = FunctionCompile @ Function[{
+    Typed[k, "MachineInteger"],
+    Typed[dd, "PackedArray"["MachineInteger", 1]],
+    Typed[pp, "PackedArray"["MachineInteger", 1]]},
+  Module[{out, d, p, pk, e, s, term, pm, ok, rows, res},
+    out = Typed[CreateDataStructure["DynamicArray"], "DynamicArray"::["MachineInteger"]];
+    Do[
+      d = dd[[i]];
+      p = pp[[i]];
+      pk = 1; e = 0; ok = True;
+      While[e < k && ok,
+        If[pk > Quotient[d, p], ok = False, pk = pk p; e = e + 1]];
+      If[ok,
+        s = 1 + pk; term = pk; pm = p;
+        While[s < d && ok,
+          If[term > Quotient[d, pk], ok = False,
+            term = term pk; pm = pm p; s = s + term]];
+        If[ok && s == d,
+          out["Append", p]; out["Append", d]; out["Append", pm]]],
+      {i, 1, Length[dd]}];
+    rows = Quotient[out["Length"], 3];
+    res = Table[0, {rows + 1}, {3}];   (* trailing {0, 0, 0} row keeps the array non-empty *)
+    Do[
+      res[[r, 1]] = out["Part", 3 r - 2];
+      res[[r, 2]] = out["Part", 3 r - 1];
+      res[[r, 3]] = out["Part", 3 r],
+      {r, 1, rows}];
+    res
+  ]
+];
+
+cookSigma[n_Integer, k_Integer?Positive] := Module[{ds, primes, rows},
+  If[n >= 2^62, Return[cookSigmaInterpreted[n, k]]];
+  ds = Rest[Divisors[n]];
+  primes = oddPrimes /@ (ds - 1);
+  If[Total[Length /@ primes] == 0, Return[{}]];
+  rows = Most @ blockRows[k,
+    Developer`ToPackedArray[Flatten[MapThread[ConstantArray, {ds, Length /@ primes}]], Integer],
+    Developer`ToPackedArray[Flatten[primes], Integer]];
+  Values[GroupBy[rows, First -> Rest]]
 ]
 
 
