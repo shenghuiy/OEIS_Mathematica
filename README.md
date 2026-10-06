@@ -18,6 +18,7 @@ Explanations of the code in this repository are in [`docs/`](docs/README.md):
 - [Carry-less (dismal) arithmetic in Java](docs/CarrylessArithmetic.md): `src/java/CarrylessArithmetic.java`, its methods, and how to call it from Java and from Mathematica via J/Link.
 - [DivisorSigmaInverse](docs/DivisorSigmaInverse.md): `src/wolfram/DivisorSigmaInverse.wl`, a Mathematica port of `invsigmaDiv` from Max Alekseyev's `invphi.gp`; `invSigmaDivisors[n, k]` lists every x with σₖ(x) equal to each divisor of n, `DivisorSigmaInverse[n, k]` gives the solutions for n itself, and `DivisorSigmaInverseCount[n, k]` counts them.
 - [EulerPhiInverse](docs/EulerPhiInverse.md): `src/wolfram/EulerPhiInverse.wl`, a compiled depth-first search for every x with φ(x) = n; `EulerPhiInverse[n]` returns them sorted.
+- [FoataTransform](https://resources.wolframcloud.com/FunctionRepository/resources/FoataTransform/): Foata's fundamental transformation of a permutation, published in the Wolfram Function Repository.
 
 ---
 
