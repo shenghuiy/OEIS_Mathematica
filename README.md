@@ -13,15 +13,22 @@ Code for exploring OEIS sequences, doing advanced math research, and having fun 
 
 ## Documentation
 
-Explanations of the code in this repository are in [`docs/`](docs/README.md):
+Explanations of the code in this repository are in [`docs/`](docs/README.md).
+
+### Functions
 
 - [Carry-less (dismal) arithmetic in Java](docs/CarrylessArithmetic.md): `src/java/CarrylessArithmetic.java`, its methods, and how to call it from Java and from Mathematica via J/Link.
 - [DivisorSigmaInverse](docs/DivisorSigmaInverse.md): `src/wolfram/DivisorSigmaInverse.wl`, a Mathematica port of `invsigmaDiv` from Max Alekseyev's `invphi.gp`; `invSigmaDivisors[n, k]` lists every x with σₖ(x) equal to each divisor of n, `DivisorSigmaInverse[n, k]` gives the solutions for n itself, and `DivisorSigmaInverseCount[n, k]` counts them.
 - [EulerPhiInverse](docs/EulerPhiInverse.md): `src/wolfram/EulerPhiInverse.wl`, a compiled depth-first search for every x with φ(x) = n; `EulerPhiInverse[n]` returns them sorted.
-- [FoataTransform](https://resources.wolframcloud.com/FunctionRepository/resources/FoataTransform/): Foata's fundamental transformation of a permutation, published in the Wolfram Function Repository.
-- [InverseFoataTransform](https://resources.wolframcloud.com/FunctionRepository/resources/InverseFoataTransform/): the inverse of Foata's fundamental transformation, published in the Wolfram Function Repository.
 
----
+### Wolfram Function Repository
+
+Functions published in the Wolfram Function Repository, linked directly since they have no pages in `docs/`:
+
+- [FoataTransform](https://resources.wolframcloud.com/FunctionRepository/resources/FoataTransform/): Foata's fundamental transformation of a permutation.
+- [InverseFoataTransform](https://resources.wolframcloud.com/FunctionRepository/resources/InverseFoataTransform/): the inverse of Foata's fundamental transformation.
+
+### OEIS sequences
 
 - [A316667](docs/A316667.md): `src/wolfram/A316667.wl`, the trapped knight walk on the square-spiral chessboard.
 - [A399539](docs/A399539.md): `src/wolfram/A399539.wl`, a compiled segmented sieve for numbers k with ψ(k) − φ(k) = d(k)⁴, with timings and the checks run in Mathematica.
