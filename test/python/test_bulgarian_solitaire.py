@@ -7,6 +7,7 @@ import unittest
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "src", "python"))
 
 import bulgarian_solitaire as bs
+import pham_conjecture as pc
 
 
 def all_partitions(lo, hi):
@@ -192,6 +193,93 @@ class RowMoveTests(unittest.TestCase):
             self.assertIn(bs.step(p), moves)
             for q in moves:
                 self.assertTrue(bs.is_partition(q) and sum(q) == sum(p))
+
+
+class BasinTests(unittest.TestCase):
+    def test_periodic_partition(self):
+        self.assertEqual(bs.periodic_partition([1, 0, 1, 0]), (4, 2, 2))
+        self.assertEqual(bs.periodic_partition([1, 1, 0, 0]), (4, 3, 1))
+        self.assertEqual(bs.periodic_partition([0, 0, 0]), (2, 1))
+        for beads in ([1, 0, 1, 0, 0], [1, 1, 0, 1, 0, 0]):
+            self.assertTrue(bs.is_periodic(bs.periodic_partition(beads)))
+
+    def test_triangular_basin_is_whole_tree(self):
+        for n in (6, 10, 15):
+            self.assertEqual(bs.basin_level_sizes(bs.periodic_partition([0] * (bs.triangular_root(n) + 1))),
+                             bs.level_sizes(n))
+
+    def test_basins_partition_the_partitions(self):
+        for n in range(1, 21):
+            total = sum(sum(bs.basin_level_sizes(c[0])) for c in bs.cycles(n))
+            self.assertEqual(total, bs.partition_number(n), n)
+
+    def test_bw_levels(self):
+        expected = {2: [2, 1, 2, 2], 3: [2, 1, 3, 6, 8, 6], 4: [2, 1, 3, 7, 14, 24, 28, 18],
+                    5: [2, 1, 3, 7, 15, 32, 60, 92, 96, 54]}
+        for ell, levels_ in expected.items():
+            self.assertEqual(bs.basin_level_sizes(bs.periodic_partition([1, 0] * ell)), levels_)
+
+    def test_bw_limit_series(self):
+        # H_BW(x) = (x-1)^2 (3x+2) / (x^3 - 3x^2 - x + 1) = (2 - x - 4x^2 + 3x^3)/(1 - x - 3x^2 + x^3)
+        num = {0: 2, 1: -1, 2: -4, 3: 3}
+        c = []
+        for k in range(12):
+            c.append(num.get(k, 0) + (c[k - 1] if k >= 1 else 0) + (3 * c[k - 2] if k >= 2 else 0)
+                     - (c[k - 3] if k >= 3 else 0))
+        self.assertEqual(c[:8], [2, 1, 3, 7, 15, 33, 71, 155])
+        for ell in range(2, 9):
+            lv = bs.basin_level_sizes(bs.periodic_partition([1, 0] * ell))
+            self.assertEqual(lv[:ell], c[:ell], ell)
+            self.assertEqual(len(lv), 2 * ell, ell)
+
+
+class TestComponents(unittest.TestCase):
+    def test_max_distance(self):
+        self.assertEqual([bs.max_distance(n) for n in range(1, 17)],
+                         [0, 0, 2, 2, 3, 6, 4, 5, 7, 12, 8, 8, 9, 14, 20, 15])
+        for n in range(1, 15):
+            self.assertEqual(bs.max_distance(n), max(bs.distance(p) for p in bs.partitions(n)), n)
+
+    def test_cycle_lengths(self):
+        self.assertEqual([bs.cycle_lengths(n) for n in (8, 17, 12, 20)], [[2, 4], [3, 6, 6], [5, 5], [6]])
+        for n in range(1, 31):
+            self.assertEqual(len(bs.cycle_lengths(n)), bs.cycle_count(n), n)
+
+    def test_components_partition_the_partitions(self):
+        for n in range(1, 15):
+            comps = [q for c in bs.cycles(n) for q in bs.component(c[0])]
+            self.assertEqual(sorted(comps), sorted(bs.partitions(n)), n)
+
+    def test_staircase_15(self):
+        c = bs.component((6, 4, 3, 1, 1))
+        self.assertEqual(len(c), 176)
+        self.assertEqual(c, bs.component((5, 4, 3, 2, 1)))
+        self.assertTrue(all(bs.cycle(q) == [(5, 4, 3, 2, 1)] for q in c))
+
+    def test_reversed_tree(self):
+        t = bs.reversed_tree((4, 3, 2, 1))
+        self.assertEqual((len(t), sum(len(v) for v in t.values())), (42, 41))
+        t = bs.reversed_tree((2, 1, 1))
+        self.assertEqual((len(t), sum(len(v) for v in t.values())), (5, 2))
+
+
+class TestPhamConjecture(unittest.TestCase):
+    def test_duals(self):
+        self.assertEqual(pc.dual([1, 0, 0]), (0, 1, 1))
+        self.assertEqual(pc.dual([1, 1, 0, 0]), (0, 0, 1, 1))
+
+    def test_closed_forms_of_pham(self):
+        # H_BWW = H_BBW = (1 - x)(x^3 - 3x^2 - 4x - 3)/(2x^3 + x^2 - 1), starts 3, 1, 2, 3, 5, 7, 11, 17
+        self.assertEqual(pc.series((1, 0, 0), 12), [3, 1, 2, 3, 5, 7, 11, 17, 25, 39, 59, 89])
+        self.assertEqual(pc.series((1, 1, 0), 12), pc.series((1, 0, 0), 12))
+        # BWWW: denominator 6x^4 + 4x^3 + x^2 - 1, level 0 is the 4 cycle partitions
+        self.assertEqual(pc.series((1, 0, 0, 0), 15)[:8], [4, 2, 6, 13, 27, 56, 116, 242])
+
+    def test_dual_denominators_agree(self):
+        for p in (3, 4):
+            for w, d, h1, h2, f1, f2 in pc.check(p):
+                self.assertEqual(f1[1], p)
+                self.assertEqual(f1[2], f2[2], (w, d))
 
 
 if __name__ == "__main__":

@@ -329,6 +329,69 @@ VerificationTest[
 ]
 
 
+(* Level sizes of one cycle (Pham) *)
+
+VerificationTest[OEIS`BulgarianSolitairePeriodicPartition[{1, 0, 1, 0}], {4, 2, 2}, TestID -> "necklace-partition-bw"]
+VerificationTest[OEIS`BulgarianSolitairePeriodicPartition[{1, 1, 0, 0}], {4, 3, 1}, TestID -> "necklace-partition-bbww"]
+VerificationTest[OEIS`BulgarianSolitairePeriodicPartition[{0, 0, 0}], {2, 1}, TestID -> "necklace-partition-staircase"]
+VerificationTest[
+  AllTrue[{{1, 0, 1, 0, 0}, {1, 1, 0, 1, 0, 0}},
+    OEIS`BulgarianSolitairePeriodicQ[OEIS`BulgarianSolitairePeriodicPartition[#]] &],
+  True,
+  TestID -> "necklace-partition-is-periodic"
+]
+VerificationTest[
+  OEIS`BulgarianSolitairePeriodicPartition[{2, 0}],
+  OEIS`BulgarianSolitairePeriodicPartition[{2, 0}],
+  TestID -> "necklace-partition-bad-bead-unevaluated"
+]
+
+(* For triangular n the basin of the fixed point is the whole game tree *)
+
+VerificationTest[
+  Table[
+    OEIS`BulgarianSolitaireBasinLevelSizes[OEIS`BulgarianSolitairePeriodicPartition[ConstantArray[0, k + 1]]] ===
+      OEIS`BulgarianSolitaireLevelSizes[k (k + 1)/2],
+    {k, 3, 5}],
+  {True, True, True},
+  TestID -> "basin-of-fixed-point-is-tree"
+]
+
+(* The basins of the cycles together hold every partition of n *)
+
+VerificationTest[
+  AllTrue[Range[1, 20],
+    Total[Total /@ (OEIS`BulgarianSolitaireBasinLevelSizes[First[#]] & /@ OEIS`BulgarianSolitaireCycles[#])] == PartitionsP[#] &],
+  True,
+  TestID -> "basins-cover-all-partitions"
+]
+
+(* Pham: necklace BW repeated l times, levels from the brute-force run *)
+
+VerificationTest[
+  Table[OEIS`BulgarianSolitaireBasinLevelSizes[OEIS`BulgarianSolitairePeriodicPartition[Flatten[ConstantArray[{1, 0}, l]]]], {l, 2, 5}],
+  {{2, 1, 2, 2}, {2, 1, 3, 6, 8, 6}, {2, 1, 3, 7, 14, 24, 28, 18}, {2, 1, 3, 7, 15, 32, 60, 92, 96, 54}},
+  TestID -> "basin-levels-bw"
+]
+
+(* The first l levels equal the coefficients of H_BW(x) = (x - 1)^2 (3x + 2)/(x^3 - 3x^2 - x + 1) *)
+
+VerificationTest[
+  CoefficientList[Series[(x - 1)^2 (3 x + 2)/(x^3 - 3 x^2 - x + 1), {x, 0, 7}], x],
+  {2, 1, 3, 7, 15, 33, 71, 155},
+  TestID -> "h-bw-series"
+]
+VerificationTest[
+  With[{h = CoefficientList[Series[(x - 1)^2 (3 x + 2)/(x^3 - 3 x^2 - x + 1), {x, 0, 7}], x]},
+    Table[
+      With[{lv = OEIS`BulgarianSolitaireBasinLevelSizes[OEIS`BulgarianSolitairePeriodicPartition[Flatten[ConstantArray[{1, 0}, l]]]]},
+        Take[lv, l] === Take[h, l] && Length[lv] == 2 l],
+      {l, 2, 8}]],
+  ConstantArray[True, 7],
+  TestID -> "basin-levels-bw-converge-to-h-bw"
+]
+
+
 (* Examples from docs/BulgarianSolitaire.md *)
 
 VerificationTest[OEIS`BulgarianSolitaireStep[{6, 4, 3, 1, 1}], {5, 5, 3, 2}, TestID -> "example-step"]
@@ -336,4 +399,76 @@ VerificationTest[Length[OEIS`BulgarianSolitaireOrbit[{6, 4, 3, 1, 1}]], 8, TestI
 VerificationTest[OEIS`BulgarianSolitaireGardenOfEdenCount[20],
   PartitionsP[17] - PartitionsP[11] + PartitionsP[2],
   TestID -> "example-ge-20"
+]
+
+(* Function Repository examples (need an internet connection the first time) *)
+
+VerificationTest[
+  ResourceFunction["HookLengths"][{6, 4, 3, 1, 1}],
+  {{10, 7, 6, 4, 2, 1}, {7, 4, 3, 1}, {5, 2, 1}, {2}, {1}},
+  TestID -> "example-hook-lengths"
+]
+VerificationTest[
+  Module[{hookCount},
+    hookCount[p_] := Total[p]!/Times @@ Flatten[ResourceFunction["HookLengths"][p]];
+    hookCount /@ OEIS`BulgarianSolitaireOrbit[{6, 4, 3, 1, 1}]],
+  {231660, 96525, 75075, 100100, 125125, 210210, 175175, 292864},
+  TestID -> "example-hook-count-orbit"
+]
+VerificationTest[
+  {Length[ResourceFunction["StandardYoungTableaux"][{4, 3, 2, 1}]],
+   ResourceFunction["StandardYoungTableaux"][{2, 1}]},
+  {768, {{{1, 2}, {3}}, {{1, 3}, {2}}}},
+  TestID -> "example-standard-young-tableaux"
+]
+
+
+(* MaxDistance, CycleLengths, Component, ReversedTree *)
+
+VerificationTest[
+  OEIS`BulgarianSolitaireMaxDistance /@ Range[16],
+  {0, 0, 2, 2, 3, 6, 4, 5, 7, 12, 8, 8, 9, 14, 20, 15},
+  TestID -> "max-distance-values"
+]
+VerificationTest[
+  Table[OEIS`BulgarianSolitaireMaxDistance[k (k + 1)/2], {k, 2, 7}],
+  Table[k (k - 1), {k, 2, 7}],
+  TestID -> "max-distance-staircase-igusa"
+]
+VerificationTest[
+  Table[OEIS`BulgarianSolitaireMaxDistance[n] == Max[OEIS`BulgarianSolitaireDistance /@ IntegerPartitions[n]], {n, 1, 14}],
+  ConstantArray[True, 14],
+  TestID -> "max-distance-vs-distance"
+]
+VerificationTest[
+  OEIS`BulgarianSolitaireCycleLengths /@ {8, 17, 12, 20},
+  {{2, 4}, {3, 6, 6}, {5, 5}, {6}},
+  TestID -> "cycle-lengths-values"
+]
+VerificationTest[
+  Table[Length[OEIS`BulgarianSolitaireCycleLengths[n]] == OEIS`BulgarianSolitaireCycleCount[n], {n, 1, 30}],
+  ConstantArray[True, 30],
+  TestID -> "cycle-lengths-count"
+]
+VerificationTest[
+  Table[Sort[Flatten[OEIS`BulgarianSolitaireComponent /@ First /@ OEIS`BulgarianSolitaireCycles[n], 1]] === Sort[IntegerPartitions[n]], {n, 1, 14}],
+  ConstantArray[True, 14],
+  TestID -> "components-partition-the-partitions"
+]
+VerificationTest[
+  With[{c = OEIS`BulgarianSolitaireComponent[{6, 4, 3, 1, 1}]},
+    {Length[c], c === OEIS`BulgarianSolitaireComponent[{5, 4, 3, 2, 1}], AllTrue[c, OEIS`BulgarianSolitaireCycle[#] === {{5, 4, 3, 2, 1}} &]}],
+  {176, True, True},
+  TestID -> "component-staircase-15"
+]
+VerificationTest[
+  With[{g = OEIS`BulgarianSolitaireReversedTree[{4, 3, 2, 1}]},
+    {VertexCount[g], EdgeCount[g], TreeGraphQ[g], Sort[VertexList[g]] === Sort[OEIS`BulgarianSolitaireComponent[{4, 3, 2, 1}]]}],
+  {42, 41, True, True},
+  TestID -> "reversed-tree-staircase-10"
+]
+VerificationTest[
+  With[{g = OEIS`BulgarianSolitaireReversedTree[{2, 1, 1}]}, {VertexCount[g], EdgeCount[g]}],
+  {5, 2},
+  TestID -> "reversed-tree-cycle-of-3"
 ]

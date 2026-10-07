@@ -47,17 +47,7 @@ VerificationTest[OEIS`EulerPhiInverse[2 (2^31 - 1)], {}, TestID -> "large-even-n
 VerificationTest[OEIS`EulerPhiInverse[3^35], {}, TestID -> "large-odd"]
 
 
-(* The Integer64 and Integer128 kernels give the same solutions *)
-
-VerificationTest[
-  AllTrue[{2, 24, 720720, 2^10 3^4 5^2 7 11 13, 2^20 3^5 5^2 7},
-    Sort[Rest[OEIS`Private`searchKernel["Integer64"][#]]] === Sort[Rest[OEIS`Private`searchKernel["Integer128"][#]]] &],
-  True,
-  TestID -> "int64-vs-int128"
-]
-
-
-(* n >= 2^58 uses the Integer128 kernel: the solutions include x0 and all satisfy phi(x) = n *)
+(* n >= 2^58 is handed to the Function Repository function: the solutions include x0 and all satisfy phi(x) = n *)
 
 VerificationTest[
   Module[{x0 = 2^61 3^2 5, n, s},
@@ -65,5 +55,5 @@ VerificationTest[
     s = OEIS`EulerPhiInverse[n];
     {n >= 2^58, MemberQ[s, x0], s === Union[s], AllTrue[s, EulerPhi[#] == n &]}],
   {True, True, True, True},
-  TestID -> "large-n-int128"
+  TestID -> "large-n-resource-function"
 ]
