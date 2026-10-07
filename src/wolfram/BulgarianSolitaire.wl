@@ -22,6 +22,8 @@ BulgarianSolitaireLeafSizes::usage = "BulgarianSolitaireLeafSizes[n] gives the n
 BulgarianSolitaireQuasiLevelSize::usage = "BulgarianSolitaireQuasiLevelSize[d] gives the number of partitions at distance d from the staircase in the quasi-infinite game (k -> Infinity): 1 for d = 0 and Fibonacci[2d] after that. For n = k(k+1)/2 it equals the actual level size for d <= Floor[k/2].";
 BulgarianSolitaireQuasiLeafSize::usage = "BulgarianSolitaireQuasiLeafSize[d] gives the number of leaves at distance d from the staircase in the quasi-infinite game: (Fibonacci[2d-2] - Fibonacci[d-1])/2 for d >= 1.";
 BulgarianSolitaireRowMoves::usage = "BulgarianSolitaireRowMoves[p] lists the partitions reachable when any one row of the Ferrers diagram of p is changed into a column, the move of the two-player game in Hopkins' 30 Years of Bulgarian Solitaire. Removing the bottom row is BulgarianSolitaireStep.";
+BulgarianSolitairePeriodicPartition::usage = "BulgarianSolitairePeriodicPartition[w] gives the partition on a cycle that corresponds to the necklace w, a list of m + 1 beads, 1 for a filled cell on diagonal m + 1 and 0 for an empty one. Rotating w gives the next partition on the same cycle.";
+BulgarianSolitaireBasinLevelSizes::usage = "BulgarianSolitaireBasinLevelSizes[p] gives the number of partitions at each distance 0, 1, 2, ... from the cycle that p ends in, counting only the partitions that flow into that cycle. Level 0 is the cycle itself.";
 
 Begin["`Private`"];
 
@@ -187,6 +189,32 @@ bsRowMoves[l_List] := With[{conj = Table[Total[Boole[# >= j & /@ l]], {j, First[
 ]
 
 BulgarianSolitaireRowMoves[l_?bsPartitionQ] := bsRowMoves[l]
+
+
+(* ::Subsection:: *)
+(*Level sizes of one cycle (Pham)*)
+
+
+(* ::Text:: *)
+(*A cycle corresponds to a necklace of m + 1 beads, a bead being 1 where a cell of diagonal m + 1 is filled. Row i of the partition has m + 1 - i cells on the smaller diagonals, plus the bead. The partitions that flow into one cycle are found by walking backward through the preimages from the cycle, so only that cycle's basin is visited, not all p(n) partitions. Pham studies the level sizes for the necklace P repeated l times as l grows; they converge to the coefficients of a rational function (Harris and Nguyen, Pham's conjecture).*)
+
+
+bsPeriodicFromNecklace[w_List] := With[{m1 = Length[w]}, DeleteCases[Table[m1 - i + w[[i]], {i, m1}], 0]]
+
+BulgarianSolitairePeriodicPartition[w_List /; w =!= {} && VectorQ[w, MatchQ[#, 0 | 1] &]] := bsPeriodicFromNecklace[w]
+
+bsBasinLevelSizes[l_List] := Module[{d = bsOrbitData[l], cyc, seen, level, out = {}},
+  cyc = Drop[First[d], Last[d]];
+  seen = AssociationThread[cyc -> True];
+  level = cyc;
+  While[level =!= {},
+    AppendTo[out, Length[level]];
+    level = Select[Flatten[bsPreimages /@ level, 1], ! KeyExistsQ[seen, #] &];
+    Scan[(seen[#] = True) &, level]];
+  out
+]
+
+BulgarianSolitaireBasinLevelSizes[l_?bsPartitionQ] := bsBasinLevelSizes[l]
 
 
 End[];

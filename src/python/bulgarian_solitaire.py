@@ -210,3 +210,29 @@ def row_moves(p):
         new = [x - 1 if x >= j else x for x in p] + [conj_j]
         out.add(tuple(sorted((x for x in new if x > 0), reverse=True)))
     return sorted(out)
+
+
+# Level sizes of one cycle (Pham)
+
+def periodic_partition(necklace):
+    """The cycle partition for a necklace of m + 1 beads (1 = filled cell on diagonal m + 1)."""
+    m1 = len(necklace)
+    rows = [m1 - 1 - i + bead for i, bead in enumerate(necklace)]
+    return tuple(x for x in rows if x > 0)
+
+
+def basin_level_sizes(p):
+    """Partitions at each distance from the cycle p ends in, counting only that cycle's basin."""
+    cyc = cycle(p)
+    seen = set(cyc)
+    level, out = list(cyc), []
+    while level:
+        out.append(len(level))
+        nxt = []
+        for q in level:
+            for r in preimages(q):
+                if r not in seen:
+                    seen.add(r)
+                    nxt.append(r)
+        level = nxt
+    return out

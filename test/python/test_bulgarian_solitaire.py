@@ -194,5 +194,43 @@ class RowMoveTests(unittest.TestCase):
                 self.assertTrue(bs.is_partition(q) and sum(q) == sum(p))
 
 
+class BasinTests(unittest.TestCase):
+    def test_periodic_partition(self):
+        self.assertEqual(bs.periodic_partition([1, 0, 1, 0]), (4, 2, 2))
+        self.assertEqual(bs.periodic_partition([1, 1, 0, 0]), (4, 3, 1))
+        self.assertEqual(bs.periodic_partition([0, 0, 0]), (2, 1))
+        for beads in ([1, 0, 1, 0, 0], [1, 1, 0, 1, 0, 0]):
+            self.assertTrue(bs.is_periodic(bs.periodic_partition(beads)))
+
+    def test_triangular_basin_is_whole_tree(self):
+        for n in (6, 10, 15):
+            self.assertEqual(bs.basin_level_sizes(bs.periodic_partition([0] * (bs.triangular_root(n) + 1))),
+                             bs.level_sizes(n))
+
+    def test_basins_partition_the_partitions(self):
+        for n in range(1, 21):
+            total = sum(sum(bs.basin_level_sizes(c[0])) for c in bs.cycles(n))
+            self.assertEqual(total, bs.partition_number(n), n)
+
+    def test_bw_levels(self):
+        expected = {2: [2, 1, 2, 2], 3: [2, 1, 3, 6, 8, 6], 4: [2, 1, 3, 7, 14, 24, 28, 18],
+                    5: [2, 1, 3, 7, 15, 32, 60, 92, 96, 54]}
+        for ell, levels_ in expected.items():
+            self.assertEqual(bs.basin_level_sizes(bs.periodic_partition([1, 0] * ell)), levels_)
+
+    def test_bw_limit_series(self):
+        # H_BW(x) = (x-1)^2 (3x+2) / (x^3 - 3x^2 - x + 1) = (2 - x - 4x^2 + 3x^3)/(1 - x - 3x^2 + x^3)
+        num = {0: 2, 1: -1, 2: -4, 3: 3}
+        c = []
+        for k in range(12):
+            c.append(num.get(k, 0) + (c[k - 1] if k >= 1 else 0) + (3 * c[k - 2] if k >= 2 else 0)
+                     - (c[k - 3] if k >= 3 else 0))
+        self.assertEqual(c[:8], [2, 1, 3, 7, 15, 33, 71, 155])
+        for ell in range(2, 9):
+            lv = bs.basin_level_sizes(bs.periodic_partition([1, 0] * ell))
+            self.assertEqual(lv[:ell], c[:ell], ell)
+            self.assertEqual(len(lv), 2 * ell, ell)
+
+
 if __name__ == "__main__":
     unittest.main()

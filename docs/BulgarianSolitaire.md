@@ -25,7 +25,7 @@ Nothing is compiled, so loading and the first call are instant. The computations
 
 ## Python version
 
-`src/python/bulgarian_solitaire.py` is a standard-library port with the same functions in snake case (`step`, `orbit`, `cycle`, `distance`, `is_periodic`, `cycles`, `cycle_count`, `is_garden_of_eden`, `garden_of_eden_count`, `garden_of_eden_partitions`, `preimages`, `graph`, `levels`, `level_sizes`, `leaf_sizes`, `quasi_level_size`, `quasi_leaf_size`, `row_moves`). Partitions are tuples, and `graph` returns a dict from each partition to its image instead of a `Graph`. The tests in `test/python/test_bulgarian_solitaire.py` mirror the Wolfram ones; run them from the repository root with `python -m unittest discover -s test/python`. All 26 tests pass (Python 3, about 1 s).
+`src/python/bulgarian_solitaire.py` is a standard-library port with the same functions in snake case (`step`, `orbit`, `cycle`, `distance`, `is_periodic`, `cycles`, `cycle_count`, `is_garden_of_eden`, `garden_of_eden_count`, `garden_of_eden_partitions`, `preimages`, `graph`, `levels`, `level_sizes`, `leaf_sizes`, `quasi_level_size`, `quasi_leaf_size`, `row_moves`, `periodic_partition`, `basin_level_sizes`). Partitions are tuples, and `graph` returns a dict from each partition to its image instead of a `Graph`. The tests in `test/python/test_bulgarian_solitaire.py` mirror the Wolfram ones; run them from the repository root with `python -m unittest discover -s test/python`. All 31 tests pass (Python 3, about 1 s).
 
 ## Public functions
 
@@ -49,6 +49,8 @@ Nothing is compiled, so loading and the first call are instant. The computations
 | `BulgarianSolitaireQuasiLevelSize[d]` | The level size `F(2d)` (1 for `d = 0`) of the quasi-infinite game, `k → ∞`. |
 | `BulgarianSolitaireQuasiLeafSize[d]` | The leaf count `(F(2d−2) − F(d−1))/2` of the quasi-infinite game. |
 | `BulgarianSolitaireRowMoves[p]` | The partitions reached by changing any one row of the Ferrers diagram into a column. |
+| `BulgarianSolitairePeriodicPartition[w]` | The cycle partition for the necklace `w`, a list of m + 1 beads (1 = filled cell on diagonal m + 1, 0 = empty). |
+| `BulgarianSolitaireBasinLevelSizes[p]` | The number of partitions at each distance from the cycle `p` ends in, counting only the partitions that flow into that cycle. Level 0 is the cycle. |
 
 `n` is a positive integer.
 
@@ -94,6 +96,14 @@ OEIS`BulgarianSolitaireLeafSizes[10]    (* {0, 0, 0, 1, 3, 1, 1, 1, 2, 1, 1, 0, 
 OEIS`BulgarianSolitaireGraph[10, VertexLabels -> "Name"]
 ```
 
+Level sizes of one cycle: the necklace BW repeated ℓ times (Pham, Harris–Nguyen):
+
+```wolfram
+OEIS`BulgarianSolitaireBasinLevelSizes[OEIS`BulgarianSolitairePeriodicPartition[{1, 0, 1, 0, 1, 0, 1, 0}]]
+```
+
+For ℓ = 4 (n = 32) this gives `{2, 1, 3, 7, 14, 24, 28, 18}`; for ℓ = 5 (n = 50) `{2, 1, 3, 7, 15, 32, 60, 92, 96, 54}`.
+
 ## How it works
 
 1. **The move.** `Sort[Append[DeleteCases[p - 1, 0], Length[p]], Greater]`.
@@ -104,6 +114,7 @@ OEIS`BulgarianSolitaireGraph[10, VertexLabels -> "Name"]
 6. **Levels.** `BulgarianSolitaireLevels[n]` groups the partitions by distance to the cycles. The periodic partitions come first; then each level is the preimages of the previous one that are not periodic. The preimage table is built once with `GroupBy[IntegerPartitions[n], step]`, so the cost is that of listing all p(n) partitions.
 7. **Quasi-infinite tree.** Eriksson and Jonsson fix the level d and let k → ∞. The generating function for the level sizes of the reversed tree with its loop at the staircase is `g(x) = (1 − x)/(1 − 3x + x²)`, with `g_d = F(2d+1)`. Without the loop, the number of partitions at distance d is `F(2d)` (A088305). The leaves have `ℓ(x) = (x³ − x⁴)/((1 − x − x²)(1 − 3x + x²))`, so `ℓ_d = (F(2d−2) − F(d−1))/2` (A094292 up to an initial zero). For `n = k(k+1)/2` the actual level sizes equal `F(2d)` for `d ≤ ⌊k/2⌋` (Theorem 5.1), and level `⌊k/2⌋ + 1` is short by 1 for odd k and by `1 + k/2` for even k.
 8. **Row-to-column moves.** In Hopkins' two-player game a move changes any row of the Ferrers diagram into a column. Removing row j lowers every column of height at least j by 1, and the removed cells form a new column whose height is the length of row j. Row 1 is the ordinary move. Starting from `{n}`, the first move is forced to `{n − 1, 1}`, and the second gives `{n − 2, 2}` or `{n − 2, 1, 1}`.
+9. **One cycle's basin and Pham's limit.** A cycle is a necklace of m + 1 beads, a bead being 1 where a cell of diagonal m + 1 is filled; row i of the partition has `m + 1 − i` cells on the smaller diagonals plus its bead. `BulgarianSolitaireBasinLevelSizes` walks backward through the preimages from the cycle, so it visits only that cycle's basin, not all p(n) partitions. Pham studies the necklace P repeated ℓ times: the level sizes converge as ℓ grows to the coefficients of a rational function `H_P(x)`. For P = BW, `H_BW(x) = (x − 1)²(3x + 2)/(x³ − 3x² − x + 1) = 2 + x + 3x² + 7x³ + 15x⁴ + 33x⁵ + 71x⁶ + 155x⁷ + …` (the formula is quoted from search summaries of the papers, not from the papers). For ℓ = 2 to 9 the first ℓ levels of the basin equal the first ℓ coefficients exactly, level ℓ is the first that differs (ℓ = 8 gives 334 where the series has 335), the cycle has length 2, and the height is 2ℓ − 1. Harris and Nguyen (arXiv 2308.05321) prove two instances of Pham's conjecture that `H_P` and `H_P*` share a denominator, where P* is P read backwards with the colours swapped.
 
 ## Checks
 

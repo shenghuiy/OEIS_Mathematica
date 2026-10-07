@@ -329,6 +329,69 @@ VerificationTest[
 ]
 
 
+(* Level sizes of one cycle (Pham) *)
+
+VerificationTest[OEIS`BulgarianSolitairePeriodicPartition[{1, 0, 1, 0}], {4, 2, 2}, TestID -> "necklace-partition-bw"]
+VerificationTest[OEIS`BulgarianSolitairePeriodicPartition[{1, 1, 0, 0}], {4, 3, 1}, TestID -> "necklace-partition-bbww"]
+VerificationTest[OEIS`BulgarianSolitairePeriodicPartition[{0, 0, 0}], {2, 1}, TestID -> "necklace-partition-staircase"]
+VerificationTest[
+  AllTrue[{{1, 0, 1, 0, 0}, {1, 1, 0, 1, 0, 0}},
+    OEIS`BulgarianSolitairePeriodicQ[OEIS`BulgarianSolitairePeriodicPartition[#]] &],
+  True,
+  TestID -> "necklace-partition-is-periodic"
+]
+VerificationTest[
+  OEIS`BulgarianSolitairePeriodicPartition[{2, 0}],
+  OEIS`BulgarianSolitairePeriodicPartition[{2, 0}],
+  TestID -> "necklace-partition-bad-bead-unevaluated"
+]
+
+(* For triangular n the basin of the fixed point is the whole game tree *)
+
+VerificationTest[
+  Table[
+    OEIS`BulgarianSolitaireBasinLevelSizes[OEIS`BulgarianSolitairePeriodicPartition[ConstantArray[0, k + 1]]] ===
+      OEIS`BulgarianSolitaireLevelSizes[k (k + 1)/2],
+    {k, 3, 5}],
+  {True, True, True},
+  TestID -> "basin-of-fixed-point-is-tree"
+]
+
+(* The basins of the cycles together hold every partition of n *)
+
+VerificationTest[
+  AllTrue[Range[1, 20],
+    Total[Total /@ (OEIS`BulgarianSolitaireBasinLevelSizes[First[#]] & /@ OEIS`BulgarianSolitaireCycles[#])] == PartitionsP[#] &],
+  True,
+  TestID -> "basins-cover-all-partitions"
+]
+
+(* Pham: necklace BW repeated l times, levels from the brute-force run *)
+
+VerificationTest[
+  Table[OEIS`BulgarianSolitaireBasinLevelSizes[OEIS`BulgarianSolitairePeriodicPartition[Flatten[ConstantArray[{1, 0}, l]]]], {l, 2, 5}],
+  {{2, 1, 2, 2}, {2, 1, 3, 6, 8, 6}, {2, 1, 3, 7, 14, 24, 28, 18}, {2, 1, 3, 7, 15, 32, 60, 92, 96, 54}},
+  TestID -> "basin-levels-bw"
+]
+
+(* The first l levels equal the coefficients of H_BW(x) = (x - 1)^2 (3x + 2)/(x^3 - 3x^2 - x + 1) *)
+
+VerificationTest[
+  CoefficientList[Series[(x - 1)^2 (3 x + 2)/(x^3 - 3 x^2 - x + 1), {x, 0, 7}], x],
+  {2, 1, 3, 7, 15, 33, 71, 155},
+  TestID -> "h-bw-series"
+]
+VerificationTest[
+  With[{h = CoefficientList[Series[(x - 1)^2 (3 x + 2)/(x^3 - 3 x^2 - x + 1), {x, 0, 7}], x]},
+    Table[
+      With[{lv = OEIS`BulgarianSolitaireBasinLevelSizes[OEIS`BulgarianSolitairePeriodicPartition[Flatten[ConstantArray[{1, 0}, l]]]]},
+        Take[lv, l] === Take[h, l] && Length[lv] == 2 l],
+      {l, 2, 8}]],
+  ConstantArray[True, 7],
+  TestID -> "basin-levels-bw-converge-to-h-bw"
+]
+
+
 (* Examples from docs/BulgarianSolitaire.md *)
 
 VerificationTest[OEIS`BulgarianSolitaireStep[{6, 4, 3, 1, 1}], {5, 5, 3, 2}, TestID -> "example-step"]
