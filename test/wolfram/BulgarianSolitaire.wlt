@@ -364,10 +364,27 @@ VerificationTest[
   True,
   TestID -> "necklace-partition-is-periodic"
 ]
+(* A necklace must be a nonempty list of 0s and 1s: otherwise a message and $Failed *)
+
 VerificationTest[
-  OEIS`BulgarianSolitairePeriodicPartition[{2, 0}],
-  OEIS`BulgarianSolitairePeriodicPartition[{2, 0}],
-  TestID -> "necklace-partition-bad-bead-unevaluated"
+  OEIS`BulgarianSolitairePeriodicPartition[{2, 0}], $Failed,
+  {OEIS`BulgarianSolitairePeriodicPartition::necklace}, TestID -> "necklace-bad-bead-message"
+]
+VerificationTest[
+  OEIS`BulgarianSolitairePeriodicPartition[{}], $Failed,
+  {OEIS`BulgarianSolitairePeriodicPartition::necklace}, TestID -> "necklace-empty-message"
+]
+VerificationTest[
+  OEIS`BulgarianSolitairePeriodicPartition[7], $Failed,
+  {OEIS`BulgarianSolitairePeriodicPartition::necklace}, TestID -> "necklace-integer-message"
+]
+VerificationTest[
+  OEIS`BulgarianSolitairePeriodicPartition[{1, 0, "a"}], $Failed,
+  {OEIS`BulgarianSolitairePeriodicPartition::necklace}, TestID -> "necklace-string-bead-message"
+]
+VerificationTest[
+  StringContainsQ[ToString[OEIS`BulgarianSolitairePeriodicPartition::necklace], "not a necklace"], True,
+  TestID -> "necklace-message-text"
 ]
 
 (* For triangular n the basin of the fixed point is the whole game tree *)
