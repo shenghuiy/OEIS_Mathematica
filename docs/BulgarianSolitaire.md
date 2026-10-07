@@ -10,6 +10,8 @@
 
 Partitions are lists of positive integers in non-increasing order, so `{6, 4, 3, 1, 1}` is five piles. Arguments that are not partitions are left unevaluated.
 
+**Notation.** `F(m)` is the m-th Fibonacci number: F(0) = 0, F(1) = 1, F(m) = F(m−1) + F(m−2), so F(0), F(1), F(2), … is 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, … In Wolfram code `F(m)` is `Fibonacci[m]`, and in the Python port it is the helper `_fib(m)`. `p(m)` is the number of partitions of m, `PartitionsP[m]` in Wolfram.
+
 ## Loading and calling
 
 From the repository root:
