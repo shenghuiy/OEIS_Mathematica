@@ -19,8 +19,8 @@ themes = <|"light" -> {White, Black, GrayLevel[0.45], RGBColor[0.87, 0.93, 1], G
 
 KeyValueMap[
   Export["docs/img/BulgarianSolitaireTree10-" <> #1 <> ".png",
-    Show[Tree[t, ImageSize -> 1400, Background -> #2[[1]],
-      TreeElementLabelStyle -> All -> Directive[#2[[2]], Large], ParentEdgeLabelStyle -> All -> Directive[#2[[2]], Large],
+    Show[Tree[t, AspectRatio -> 1.1, ImageSize -> 500, Background -> #2[[1]],
+      TreeElementLabelStyle -> All -> Directive[#2[[2]], 7], ParentEdgeLabelStyle -> All -> Directive[#2[[2]], 7],
       ParentEdgeStyle -> #2[[3]], TreeElementStyle -> All -> Directive[#2[[4]], EdgeForm[#2[[5]]]]]],
-    ImageResolution -> 100] &,
+    ImageResolution -> 200] &,
   themes];
