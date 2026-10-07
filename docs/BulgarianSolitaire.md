@@ -8,7 +8,7 @@
 - H. Eriksson and M. Jonsson, *Level sizes of the Bulgarian solitaire game tree*, Fibonacci Quart. 55 (2017).
 - P. Ellis, *Bulgarian Solitaire*, Westchester Area Math Circle slides (2019): the cycles for 8 and 17 cards.
 
-Partitions are lists of positive integers in non-increasing order, so `{6, 4, 3, 1, 1}` is five piles. A function that takes a partition gives a message (`BulgarianSolitaireStep::partition`, and so on) and returns `$Failed` when its first argument is not one: `OEIS`BulgarianSolitaireStep[{1, 2}]` and `OEIS`BulgarianSolitaireStep[{}]` both fail this way. `BulgarianSolitairePeriodicPartition` does the same for a necklace that is not a nonempty list of 0s and 1s (`BulgarianSolitairePeriodicPartition::necklace`).
+Partitions are lists of positive integers in non-increasing order, so `{6, 4, 3, 1, 1}` is five piles. A function that takes a partition gives a message (`BulgarianSolitaireStep::partition`, and so on) and returns `$Failed` when its first argument is not one: `OEIS`BulgarianSolitaireStep[{1, 2}]` and `OEIS`BulgarianSolitaireStep[{}]` both fail this way. `BulgarianSolitairePeriodicPartition` does the same for a necklace that is not a nonempty list of 0s and 1s (`BulgarianSolitairePeriodicPartition::necklace`). The functions of an integer `n` give `::posint` (for example `BulgarianSolitaireCycleCount::posint`) and return `$Failed` when `n` is not a positive integer, and `BulgarianSolitaireQuasiLevelSize` and `BulgarianSolitaireQuasiLeafSize` give `::nonnegint` when `d` is not a nonnegative integer.
 
 **Notation.** `F(m)` is the m-th Fibonacci number: F(0) = 0, F(1) = 1, F(m) = F(m−1) + F(m−2), so F(0), F(1), F(2), … is 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, … In Wolfram code `F(m)` is `Fibonacci[m]`, and in the Python port it is the helper `_fib(m)`. `p(m)` is the number of partitions of m, `PartitionsP[m]` in Wolfram.
 
@@ -171,7 +171,7 @@ Pham also conjectures that `|O_(P^k)| = c_P^(k−1) |O_P|` with `c_P = c_P*` (fo
 
 ## Checks
 
-The tests in `test/wolfram/BulgarianSolitaire.wlt` all pass in Mathematica 15.0.1 (98 cases). To run them:
+The tests in `test/wolfram/BulgarianSolitaire.wlt` all pass in Mathematica 15.0.1 (107 cases). To run them:
 
 ```wolfram
 TestReport["test/wolfram/BulgarianSolitaire.wlt"]
