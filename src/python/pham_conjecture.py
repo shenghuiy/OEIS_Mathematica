@@ -44,7 +44,7 @@ def head(w, k, terms):
     for _ in range(terms):
         out.append(len(level))
         # a partition off the cycle has one image, so no seen-set is needed beyond the cycle itself
-        level = [r for q in level for r in bs.preimages(q) if r not in on_cycle]
+        level = [r for q in level for r in bs._preimages(q) if r not in on_cycle]
         if not level:
             break
     return out

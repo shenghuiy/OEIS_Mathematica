@@ -288,5 +288,50 @@ class TestPhamConjecture(unittest.TestCase):
                 self.assertEqual(f1[2], f2[2], (w, d))
 
 
+class TestInvalidArguments(unittest.TestCase):
+    """The same checks as the ::partition, ::necklace, ::posint and ::nonnegint messages of the Wolfram package."""
+
+    PARTITION_FUNCTIONS = [bs.step, bs.orbit, bs.cycle, bs.distance, bs.is_periodic, bs.is_garden_of_eden,
+                           bs.preimages, bs.row_moves, bs.basin_levels, bs.basin_level_sizes, bs.component,
+                           bs.reversed_tree]
+    N_FUNCTIONS = [bs.cycles, bs.cycle_count, bs.garden_of_eden_count, bs.garden_of_eden_partitions, bs.graph,
+                   bs.levels, bs.level_sizes, bs.leaf_sizes, bs.max_distance, bs.cycle_lengths]
+
+    def test_not_a_partition(self):
+        for f in self.PARTITION_FUNCTIONS:
+            for bad in [(1, 2), (), (3, 0), 5, [3, 2], (2.0, 1), (True,), "32"]:
+                with self.assertRaisesRegex(ValueError, "is not a partition", msg=(f.__name__, bad)):
+                    f(bad)
+
+    def test_message_text(self):
+        with self.assertRaisesRegex(ValueError, r"^\(1, 2\) is not a partition: expected a nonempty tuple"):
+            bs.step((1, 2))
+
+    def test_not_a_necklace(self):
+        for bad in [[], (), [2, 0], [1, 0, "a"], 7, [True, 0], "10"]:
+            with self.assertRaisesRegex(ValueError, "is not a necklace", msg=bad):
+                bs.periodic_partition(bad)
+        self.assertEqual(bs.periodic_partition([1, 0, 0]), (3, 1))
+        self.assertEqual(bs.periodic_partition((1, 0, 0)), (3, 1))
+
+    def test_not_a_positive_integer(self):
+        for f in self.N_FUNCTIONS:
+            for bad in [0, -3, 2.5, (4, 3), "8", True]:
+                with self.assertRaisesRegex(ValueError, "is not a positive integer", msg=(f.__name__, bad)):
+                    f(bad)
+
+    def test_not_a_nonnegative_integer(self):
+        for f in (bs.quasi_level_size, bs.quasi_leaf_size):
+            for bad in [-1, 0.5, "1", None]:
+                with self.assertRaisesRegex(ValueError, "is not a nonnegative integer", msg=(f.__name__, bad)):
+                    f(bad)
+        self.assertEqual((bs.quasi_level_size(0), bs.quasi_leaf_size(0), bs.quasi_level_size(3)), (1, 0, 8))
+
+    def test_valid_arguments_unchanged(self):
+        self.assertEqual(bs.step((6, 4, 3, 1, 1)), (5, 5, 3, 2))
+        self.assertEqual(len(bs.component((5, 4, 3, 2, 1))), 176)
+        self.assertEqual(bs.max_distance(10), 12)
+
+
 if __name__ == "__main__":
     unittest.main()
