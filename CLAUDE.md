@@ -15,14 +15,16 @@ Two independent code bases share the repo; only the Java one has a build; the Ja
 
 ## Commands
 
-Maven is configured with non-standard directories (`src/java`, `test/java`), Java release 11. For local builds on the Mac (Maven installed via MacPorts), use `/opt/local/bin/mvn3` in place of `mvn`; CI uses plain `mvn`.
+Maven is configured with non-standard directories (`src/java`, `test/java`), Java release 11. Use plain `mvn` (as CI does). `mvn3` is only the name MacPorts gives Maven on the Mac (`/opt/local/bin/mvn3`); it does not exist on other machines, so use it only there.
 
 ```bash
-/opt/local/bin/mvn3 test                                        # all tests (CI runs this on Java 11 and 21)
-/opt/local/bin/mvn3 test -Dtest=CarrylessArithmeticTest#methodName   # single test
+mvn test                                        # all tests (CI runs this on Java 11 and 21)
+mvn test -Dtest=CarrylessArithmeticTest#methodName   # single test
 ```
 
-`mvn3 test` writes reports to `target/surefire-reports/` (gitignored). To update the recorded results, copy `CarrylessArithmeticTest.txt` and `TEST-CarrylessArithmeticTest.xml` into `test/java/results/`. See `test/java/README.md` for regenerating `expected/` from the C program.
+`mvn test` runs only the Java tests; the Python tests are separate (`python -m unittest discover -s test/python -v`, CI: `.github/workflows/python.yml`).
+
+`mvn test` writes reports to `target/surefire-reports/` (gitignored). To update the recorded results, copy `CarrylessArithmeticTest.txt` and `TEST-CarrylessArithmeticTest.xml` into `test/java/results/`. See `test/java/README.md` for regenerating `expected/` from the C program.
 
 The Wolfram tests are not part of Maven or CI. Run them in a Wolfram kernel with `TestReport /@ FileNames["*.wlt", "test/wolfram"]`; see `test/wolfram/README.md`.
 
