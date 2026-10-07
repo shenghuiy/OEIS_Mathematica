@@ -400,3 +400,75 @@ VerificationTest[OEIS`BulgarianSolitaireGardenOfEdenCount[20],
   PartitionsP[17] - PartitionsP[11] + PartitionsP[2],
   TestID -> "example-ge-20"
 ]
+
+(* Function Repository examples (need an internet connection the first time) *)
+
+VerificationTest[
+  ResourceFunction["HookLengths"][{6, 4, 3, 1, 1}],
+  {{10, 7, 6, 4, 2, 1}, {7, 4, 3, 1}, {5, 2, 1}, {2}, {1}},
+  TestID -> "example-hook-lengths"
+]
+VerificationTest[
+  Module[{hookCount},
+    hookCount[p_] := Total[p]!/Times @@ Flatten[ResourceFunction["HookLengths"][p]];
+    hookCount /@ OEIS`BulgarianSolitaireOrbit[{6, 4, 3, 1, 1}]],
+  {231660, 96525, 75075, 100100, 125125, 210210, 175175, 292864},
+  TestID -> "example-hook-count-orbit"
+]
+VerificationTest[
+  {Length[ResourceFunction["StandardYoungTableaux"][{4, 3, 2, 1}]],
+   ResourceFunction["StandardYoungTableaux"][{2, 1}]},
+  {768, {{{1, 2}, {3}}, {{1, 3}, {2}}}},
+  TestID -> "example-standard-young-tableaux"
+]
+
+
+(* MaxDistance, CycleLengths, Component, ReversedTree *)
+
+VerificationTest[
+  OEIS`BulgarianSolitaireMaxDistance /@ Range[16],
+  {0, 0, 2, 2, 3, 6, 4, 5, 7, 12, 8, 8, 9, 14, 20, 15},
+  TestID -> "max-distance-values"
+]
+VerificationTest[
+  Table[OEIS`BulgarianSolitaireMaxDistance[k (k + 1)/2], {k, 2, 7}],
+  Table[k (k - 1), {k, 2, 7}],
+  TestID -> "max-distance-staircase-igusa"
+]
+VerificationTest[
+  Table[OEIS`BulgarianSolitaireMaxDistance[n] == Max[OEIS`BulgarianSolitaireDistance /@ IntegerPartitions[n]], {n, 1, 14}],
+  ConstantArray[True, 14],
+  TestID -> "max-distance-vs-distance"
+]
+VerificationTest[
+  OEIS`BulgarianSolitaireCycleLengths /@ {8, 17, 12, 20},
+  {{2, 4}, {3, 6, 6}, {5, 5}, {6}},
+  TestID -> "cycle-lengths-values"
+]
+VerificationTest[
+  Table[Length[OEIS`BulgarianSolitaireCycleLengths[n]] == OEIS`BulgarianSolitaireCycleCount[n], {n, 1, 30}],
+  ConstantArray[True, 30],
+  TestID -> "cycle-lengths-count"
+]
+VerificationTest[
+  Table[Sort[Flatten[OEIS`BulgarianSolitaireComponent /@ First /@ OEIS`BulgarianSolitaireCycles[n], 1]] === Sort[IntegerPartitions[n]], {n, 1, 14}],
+  ConstantArray[True, 14],
+  TestID -> "components-partition-the-partitions"
+]
+VerificationTest[
+  With[{c = OEIS`BulgarianSolitaireComponent[{6, 4, 3, 1, 1}]},
+    {Length[c], c === OEIS`BulgarianSolitaireComponent[{5, 4, 3, 2, 1}], AllTrue[c, OEIS`BulgarianSolitaireCycle[#] === {{5, 4, 3, 2, 1}} &]}],
+  {176, True, True},
+  TestID -> "component-staircase-15"
+]
+VerificationTest[
+  With[{g = OEIS`BulgarianSolitaireReversedTree[{4, 3, 2, 1}]},
+    {VertexCount[g], EdgeCount[g], TreeGraphQ[g], Sort[VertexList[g]] === Sort[OEIS`BulgarianSolitaireComponent[{4, 3, 2, 1}]]}],
+  {42, 41, True, True},
+  TestID -> "reversed-tree-staircase-10"
+]
+VerificationTest[
+  With[{g = OEIS`BulgarianSolitaireReversedTree[{2, 1, 1}]}, {VertexCount[g], EdgeCount[g]}],
+  {5, 2},
+  TestID -> "reversed-tree-cycle-of-3"
+]

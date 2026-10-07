@@ -221,13 +221,13 @@ def periodic_partition(necklace):
     return tuple(x for x in rows if x > 0)
 
 
-def basin_level_sizes(p):
-    """Partitions at each distance from the cycle p ends in, counting only that cycle's basin."""
+def basin_levels(p):
+    """The partitions at each distance from the cycle p ends in, counting only that cycle's basin."""
     cyc = cycle(p)
     seen = set(cyc)
     level, out = list(cyc), []
     while level:
-        out.append(len(level))
+        out.append(level)
         nxt = []
         for q in level:
             for r in preimages(q):
@@ -236,3 +236,30 @@ def basin_level_sizes(p):
                     nxt.append(r)
         level = nxt
     return out
+
+
+def basin_level_sizes(p):
+    """Number of partitions at each distance from the cycle p ends in."""
+    return [len(lev) for lev in basin_levels(p)]
+
+
+def max_distance(n):
+    """The largest number of moves any partition of n needs to reach a cycle (the game tree's height)."""
+    return len(levels(n)) - 1
+
+
+def cycle_lengths(n):
+    """The sorted lengths of the cycles of partitions of n."""
+    return sorted(len(c) for c in cycles(n))
+
+
+def component(p):
+    """The cycle p ends in and every partition that flows into it, in order of distance from the cycle."""
+    return [q for lev in basin_levels(p) for q in lev]
+
+
+def reversed_tree(p):
+    """The component of p with the edges reversed, as a dict from each partition to its preimages that are
+    not on the cycle. Each partition off the cycle has exactly one parent."""
+    cyc = set(cycle(p))
+    return {q: [r for r in preimages(q) if r not in cyc] for q in component(p)}

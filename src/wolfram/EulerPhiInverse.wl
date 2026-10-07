@@ -22,10 +22,10 @@ Begin["`Private`"];
 
 
 (* ::Text:: *)
-(*Solutions are appended to a growable DynamicArray, so a single pass finds them all. The element type ty is a parameter: Integer64 is much faster than Integer128, and safe when n < 2^58, because then every solution x < 7.5 n < 2^63 and every intermediate product is at most 2 n. The result starts with a 0 so it is never empty (compiled code cannot return an empty array); callers drop it.*)
+(*Solutions are appended to a growable DynamicArray, so a single pass finds them all. The kernel uses Integer64, which is safe when n < 2^58, because then every solution x < 7.5 n < 2^63 and every intermediate product is at most 2 n. The result starts with a 0 so it is never empty (compiled code cannot return an empty array); callers drop it.*)
 
 
-makeSearch[ty_String] := With[{t = ty},
+makeSearch[] := With[{t = "Integer64"},
   FunctionCompile[Function[{Typed[n, t]},
     Module[{res, dfs, divs, primes},
       res = Typed[CreateDataStructure["DynamicArray"], "DynamicArray"::[t]];
@@ -56,10 +56,10 @@ makeSearch[ty_String] := With[{t = ty},
 
 
 (* ::Text:: *)
-(*Each kernel is compiled the first time it is needed, so loading the package is instant and a small n never pays for the Integer128 kernel.*)
+(*The kernel is compiled the first time it is needed, so loading the package is instant.*)
 
 
-searchKernel[ty_String] := searchKernel[ty] = makeSearch[ty]
+searchKernel[] := searchKernel[] = makeSearch[]
 
 
 (* ::Subsection:: *)
@@ -67,15 +67,15 @@ searchKernel[ty_String] := searchKernel[ty] = makeSearch[ty]
 
 
 (* ::Text:: *)
-(*EulerPhi[1] = EulerPhi[2] = 1, but phi(x) is even for x > 2, so every other odd n has no solution and is answered without compiling anything.*)
+(*EulerPhi[1] = EulerPhi[2] = 1, but phi(x) is even for x > 2, so every other odd n has no solution and is answered without compiling anything. For n >= 2^58 the Integer64 kernel could overflow, so the Function Repository's EulerPhiInverse is used instead.*)
 
 
 EulerPhiInverse[1] := {1, 2}
 
 EulerPhiInverse[n_Integer?Positive] := Which[
   OddQ[n], {},
-  n < 2^58, Sort[Rest[searchKernel["Integer64"][n]]],
-  True, Sort[Rest[searchKernel["Integer128"][n]]]]
+  n < 2^58, Sort[Rest[searchKernel[][n]]],
+  True, Sort[ResourceFunction["EulerPhiInverse"][n]]]
 
 
 End[];

@@ -25,7 +25,7 @@ Nothing is compiled, so loading and the first call are instant. The computations
 
 ## Python version
 
-`src/python/bulgarian_solitaire.py` is a standard-library port with the same functions in snake case (`step`, `orbit`, `cycle`, `distance`, `is_periodic`, `cycles`, `cycle_count`, `is_garden_of_eden`, `garden_of_eden_count`, `garden_of_eden_partitions`, `preimages`, `graph`, `levels`, `level_sizes`, `leaf_sizes`, `quasi_level_size`, `quasi_leaf_size`, `row_moves`, `periodic_partition`, `basin_level_sizes`). Partitions are tuples, and `graph` returns a dict from each partition to its image instead of a `Graph`. The tests in `test/python/test_bulgarian_solitaire.py` mirror the Wolfram ones; run them from the repository root with `python -m unittest discover -s test/python`. All 31 tests pass (Python 3, about 1 s).
+`src/python/bulgarian_solitaire.py` is a standard-library port with the same functions in snake case (`step`, `orbit`, `cycle`, `distance`, `is_periodic`, `cycles`, `cycle_count`, `is_garden_of_eden`, `garden_of_eden_count`, `garden_of_eden_partitions`, `preimages`, `graph`, `levels`, `level_sizes`, `leaf_sizes`, `quasi_level_size`, `quasi_leaf_size`, `row_moves`, `periodic_partition`, `basin_levels`, `basin_level_sizes`, `max_distance`, `cycle_lengths`, `component`, `reversed_tree`). Partitions are tuples, and `graph` returns a dict from each partition to its image instead of a `Graph`, and `reversed_tree` a dict from each partition to its children. The tests in `test/python/test_bulgarian_solitaire.py` mirror the Wolfram ones; run them from the repository root with `python -m unittest discover -s test/python`. All 39 tests pass (Python 3, about 1 s).
 
 ## Public functions
 
@@ -51,6 +51,10 @@ Nothing is compiled, so loading and the first call are instant. The computations
 | `BulgarianSolitaireRowMoves[p]` | The partitions reached by changing any one row of the Ferrers diagram into a column. |
 | `BulgarianSolitairePeriodicPartition[w]` | The cycle partition for the necklace `w`, a list of m + 1 beads (1 = filled cell on diagonal m + 1, 0 = empty). |
 | `BulgarianSolitaireBasinLevelSizes[p]` | The number of partitions at each distance from the cycle `p` ends in, counting only the partitions that flow into that cycle. Level 0 is the cycle. |
+| `BulgarianSolitaireMaxDistance[n]` | The largest distance to a cycle over all partitions of `n`, the height of the game tree. For `n = k(k+1)/2` it is `k(k−1)` (Igusa). |
+| `BulgarianSolitaireCycleLengths[n]` | The sorted lengths of the cycles of partitions of `n`, one entry per cycle. |
+| `BulgarianSolitaireComponent[p]` | The connected component of `p`: its cycle and every partition that flows into it, ordered by distance from the cycle. |
+| `BulgarianSolitaireReversedTree[p, opts]` | The component of `p` with the edges reversed (each partition points to its preimages), without the edges into the cycle. Options go to `Graph`. |
 
 `n` is a positive integer.
 
@@ -104,6 +108,47 @@ OEIS`BulgarianSolitaireBasinLevelSizes[OEIS`BulgarianSolitairePeriodicPartition[
 
 For ℓ = 4 (n = 32) this gives `{2, 1, 3, 7, 14, 24, 28, 18}`; for ℓ = 5 (n = 50) `{2, 1, 3, 7, 15, 32, 60, 92, 96, 54}`.
 
+Height, cycle lengths, components and the reversed tree:
+
+```wolfram
+OEIS`BulgarianSolitaireMaxDistance /@ Range[16]
+(* {0, 0, 2, 2, 3, 6, 4, 5, 7, 12, 8, 8, 9, 14, 20, 15}: k(k−1) at n = 3, 6, 10, 15 *)
+OEIS`BulgarianSolitaireCycleLengths /@ {8, 17}                      (* {{2, 4}, {3, 6, 6}} *)
+Length[OEIS`BulgarianSolitaireComponent[{6, 4, 3, 1, 1}]]           (* 176 = p(15): one component *)
+OEIS`BulgarianSolitaireReversedTree[{4, 3, 2, 1}, VertexLabels -> "Name"]
+```
+
+The last call is the game tree for 10 cards drawn from the root, with 42 vertices and 41 edges (`TreeGraphQ` is `True`). For a cycle of length above 1, such as `{2, 1, 1}` (the cycle of partitions of 4), the result is a forest with one tree hanging from each cycle partition.
+
+### With Young tableaux
+
+The Function Repository's [HookLengths](https://resources.wolframcloud.com/FunctionRepository/resources/HookLengths/) and [StandardYoungTableaux](https://resources.wolframcloud.com/FunctionRepository/resources/StandardYoungTableaux/) take a partition, so they apply directly to the partitions here (the first call downloads the function).
+
+The hook lengths of the 15-card starting partition, and of the staircase it ends on, whose hooks are the odd numbers 1, 3, …, 2k − 1 along each row:
+
+```wolfram
+ResourceFunction["HookLengths"][{6, 4, 3, 1, 1}]   (* {{10, 7, 6, 4, 2, 1}, {7, 4, 3, 1}, {5, 2, 1}, {2}, {1}} *)
+ResourceFunction["HookLengths"][{5, 4, 3, 2, 1}]   (* {{9, 7, 5, 3, 1}, {7, 5, 3, 1}, {5, 3, 1}, {3, 1}, {1}} *)
+```
+
+The hook length formula `n!/∏ hooks` counts the standard Young tableaux of a shape without listing them. Along the orbit of `{6, 4, 3, 1, 1}` it gives
+
+```wolfram
+hookCount[p_] := Total[p]!/Times @@ Flatten[ResourceFunction["HookLengths"][p]];
+hookCount /@ OEIS`BulgarianSolitaireOrbit[{6, 4, 3, 1, 1}]
+(* {231660, 96525, 75075, 100100, 125125, 210210, 175175, 292864} *)
+```
+
+and the last value is the staircase (A005118: 1, 2, 16, 768, 292864, 1100742656, … for k = 1, 2, …). `StandardYoungTableaux` lists them for small shapes, and agrees with the formula:
+
+```wolfram
+ResourceFunction["StandardYoungTableaux"][{2, 1}]                  (* {{{1, 2}, {3}}, {{1, 3}, {2}}} *)
+Length[ResourceFunction["StandardYoungTableaux"][{4, 3, 2, 1}]]   (* 768 *)
+Total[hookCount[#]^2 & /@ IntegerPartitions[8]]                    (* 40320 = 8! *)
+```
+
+The last line is the Robinson–Schensted identity: the squares of the tableau counts over the partitions of n add up to n!.
+
 ## How it works
 
 1. **The move.** `Sort[Append[DeleteCases[p - 1, 0], Length[p]], Greater]`.
@@ -114,11 +159,13 @@ For ℓ = 4 (n = 32) this gives `{2, 1, 3, 7, 14, 24, 28, 18}`; for ℓ = 5 (n =
 6. **Levels.** `BulgarianSolitaireLevels[n]` groups the partitions by distance to the cycles. The periodic partitions come first; then each level is the preimages of the previous one that are not periodic. The preimage table is built once with `GroupBy[IntegerPartitions[n], step]`, so the cost is that of listing all p(n) partitions.
 7. **Quasi-infinite tree.** Eriksson and Jonsson fix the level d and let k → ∞. The generating function for the level sizes of the reversed tree with its loop at the staircase is `g(x) = (1 − x)/(1 − 3x + x²)`, with `g_d = F(2d+1)`. Without the loop, the number of partitions at distance d is `F(2d)` (A088305). The leaves have `ℓ(x) = (x³ − x⁴)/((1 − x − x²)(1 − 3x + x²))`, so `ℓ_d = (F(2d−2) − F(d−1))/2` (A094292 up to an initial zero). For `n = k(k+1)/2` the actual level sizes equal `F(2d)` for `d ≤ ⌊k/2⌋` (Theorem 5.1), and level `⌊k/2⌋ + 1` is short by 1 for odd k and by `1 + k/2` for even k.
 8. **Row-to-column moves.** In Hopkins' two-player game a move changes any row of the Ferrers diagram into a column. Removing row j lowers every column of height at least j by 1, and the removed cells form a new column whose height is the length of row j. Row 1 is the ordinary move. Starting from `{n}`, the first move is forced to `{n − 1, 1}`, and the second gives `{n − 2, 2}` or `{n − 2, 1, 1}`.
-9. **One cycle's basin and Pham's limit.** A cycle is a necklace of m + 1 beads, a bead being 1 where a cell of diagonal m + 1 is filled; row i of the partition has `m + 1 − i` cells on the smaller diagonals plus its bead. `BulgarianSolitaireBasinLevelSizes` walks backward through the preimages from the cycle, so it visits only that cycle's basin, not all p(n) partitions. Pham studies the necklace P repeated ℓ times: the level sizes converge as ℓ grows to the coefficients of a rational function `H_P(x)`. For P = BW, `H_BW(x) = (x − 1)²(3x + 2)/(x³ − 3x² − x + 1) = 2 + x + 3x² + 7x³ + 15x⁴ + 33x⁵ + 71x⁶ + 155x⁷ + …` (the formula is quoted from search summaries of the papers, not from the papers). For ℓ = 2 to 9 the first ℓ levels of the basin equal the first ℓ coefficients exactly, level ℓ is the first that differs (ℓ = 8 gives 334 where the series has 335), the cycle has length 2, and the height is 2ℓ − 1. Harris and Nguyen (arXiv 2308.05321) prove two instances of Pham's conjecture that `H_P` and `H_P*` share a denominator, where P* is P read backwards with the colours swapped.
+9. **One cycle's basin and Pham's limit.** A cycle is a necklace of m + 1 beads, a bead being 1 (black, B) where a cell of diagonal m + 1 is filled; row i of the partition has `m + 1 − i` cells on the smaller diagonals plus its bead (Pham's difference labelling from the staircase, with 1 = B and 0 = W). `BulgarianSolitaireBasinLevelSizes` walks backward through the preimages from the cycle, so it visits only that cycle's basin, not all p(n) partitions. Pham (arXiv 2208.14496) studies the necklace P repeated k times: the level sizes of the basin converge as k grows to the coefficients of a rational function `H_P(x)`. For P = BW, `H_BW(x) = (x − 1)²(3x + 2)/(x³ − 3x² − x + 1) = 2 + x + 3x² + 7x³ + 15x⁴ + 33x⁵ + 71x⁶ + 155x⁷ + …` (Theorem 1.1; I checked it against the paper's text), and for a primitive P of length at least 3 the denominator has degree at most |P| and the numerator degree at most 2|P| (Theorem 1.2). She conjectures that the degree of the denominator is exactly |P|, and that `H_P` and `H_P*` have the same denominator, where P* is P read backwards with the colours swapped (Conjecture 1.1 of Harris–Nguyen, arXiv 2308.05321, who prove it for `BW^k` and `B(WB)^k`, the latter with `H_B(WB)^k = H_W(BW)^k`). In the data, the first levels of the basin of `P^k` agree with the series for about 2k terms (for example 13 of 14 for BWW with k = 6 and 12 for BWWW with k = 6), more than the k levels I first checked for BW (ℓ = 2 to 9, where level ℓ is the first that differs: ℓ = 8 gives 334 where the series has 335, the cycle has length 2, and the height is 2ℓ − 1).
+
+Pham also conjectures that `|O_(P^k)| = c_P^(k−1) |O_P|` with `c_P = c_P*` (for BWW and BBW, `c = 5`); that is a statement about orbit sizes and is not checked here.
 
 ## Checks
 
-The tests in `test/wolfram/BulgarianSolitaire.wlt` have not been run yet (the package was written without a Wolfram kernel), so run them locally first:
+The tests in `test/wolfram/BulgarianSolitaire.wlt` all pass in Mathematica 15.0.1 (88 cases). To run them:
 
 ```wolfram
 TestReport["test/wolfram/BulgarianSolitaire.wlt"]
@@ -133,3 +180,8 @@ They check:
 - `BulgarianSolitaireGardenOfEdenCount` against a direct count for n ≤ 40, and `BulgarianSolitairePreimages` against a brute-force search for n ≤ 14.
 - The level sizes for 6 and 10 cards (the latter read off Figure 2 of Eriksson and Jonsson, with the 42 vertices and 14 leaves accounted for), the tree height k(k−1) for k = 2 to 7, and Theorem 5.1 for k = 3 to 8, including the deficit at level `⌊k/2⌋ + 1`.
 - The generating functions for `F(2d)` and the leaf counts against the closed forms.
+- `BulgarianSolitaireMaxDistance` against the largest `BulgarianSolitaireDistance` for n ≤ 14 and against k(k−1) for k = 2 to 7, the cycle lengths for 8, 12, 17 and 20, the components of the cycles partitioning the partitions of n for n ≤ 14, and the reversed tree for 10 cards (42 vertices, 41 edges, a tree).
+
+### Checking Pham's conjecture on more necklaces
+
+Only the first 2k or so levels of the basin of `P^k` match the limit, so the series can be read off without building the whole basin: grow the preimages from the cycle for D = 3|P| + 3 levels with k = D/2 + 1 repeats (and k + 1, which must give the same D terms), then fit the smallest rational function with denominator degree at most |P| and numerator degree at most 2|P|, leaving two spare equations. This reproduces Pham's closed forms for BWW (= BBW), BWWW, BBBW, BBWW and BWWWW, including the denominators `1 − x² − 2x³`, `1 − x² − 4x³ − 6x⁴`, `1 − x² − 2x³ − 3x⁴` and `1 − 2x³ − 8x⁴ − 12x⁵`. For the primitive necklaces with |P| = 3, 4 and 5 (all 2, 3 and 6 of them, which form 1, 2 and 3 pairs {P, P*}), `H_P` and `H_P*` have the same denominator, of degree exactly |P| in every case; the series are even equal for BWW/BBW, BBWW (its own dual) and the pair of length 5 with `H = 5 + 2x + 5x² + 9x³ + …`, and differ only in the numerator for BWWW/BBBW, BWWWW/BBBBW and BBWWW/BBBWW. Run it with `python src/python/pham_conjecture.py 3 5` (`pham_conjecture.py` is stdlib-only and uses `bulgarian_solitaire.py`).
