@@ -246,6 +246,24 @@ BulgarianSolitaireReversedTree[l_?bsPartitionQ, opts___?OptionQ] := Module[{leve
 ]
 
 
+(* ::Subsection:: *)
+(*Invalid partitions*)
+
+
+(* ::Text:: *)
+(*Every function that takes a partition gives a message and returns $Failed when its first argument is not one: a nonempty list of positive integers in non-increasing order.*)
+
+
+Scan[
+  Function[f,
+    MessageName[f, "partition"] = "`1` is not a partition: expected a nonempty list of positive integers in non-increasing order.";
+    f[l_, ___] /; ! bsPartitionQ[l] := (Message[f::partition, l]; $Failed)],
+  {BulgarianSolitaireStep, BulgarianSolitaireOrbit, BulgarianSolitaireCycle, BulgarianSolitaireDistance,
+   BulgarianSolitairePeriodicQ, BulgarianSolitaireGardenOfEdenQ, BulgarianSolitairePreimages,
+   BulgarianSolitaireRowMoves, BulgarianSolitaireBasinLevelSizes, BulgarianSolitaireComponent,
+   BulgarianSolitaireReversedTree}]
+
+
 End[];
 
 
