@@ -522,3 +522,55 @@ VerificationTest[
   {0, 0, 1, 1, 2, 3, 5, 7, 10, 14, 20, 27, 37, 49, 66, 86, 113, 147, 190, 243},
   TestID -> "ge-count-a123975"
 ]
+
+
+(* Integer arguments: n must be a positive integer, and d a nonnegative integer *)
+
+VerificationTest[
+  OEIS`BulgarianSolitaireLevelSizes[0], $Failed, {OEIS`BulgarianSolitaireLevelSizes::posint},
+  TestID -> "n-zero-message"
+]
+VerificationTest[
+  OEIS`BulgarianSolitaireCycleCount[-3], $Failed, {OEIS`BulgarianSolitaireCycleCount::posint},
+  TestID -> "n-negative-message"
+]
+VerificationTest[
+  OEIS`BulgarianSolitaireCycles[2.5], $Failed, {OEIS`BulgarianSolitaireCycles::posint},
+  TestID -> "n-real-message"
+]
+VerificationTest[
+  OEIS`BulgarianSolitaireGardenOfEdenCount[{4, 3}], $Failed, {OEIS`BulgarianSolitaireGardenOfEdenCount::posint},
+  TestID -> "n-list-message"
+]
+VerificationTest[
+  Quiet[
+    (#[0] & /@ {OEIS`BulgarianSolitaireCycles, OEIS`BulgarianSolitaireCycleCount, OEIS`BulgarianSolitaireGardenOfEdenCount,
+       OEIS`BulgarianSolitaireGardenOfEdenPartitions, OEIS`BulgarianSolitaireGraph, OEIS`BulgarianSolitaireLevels,
+       OEIS`BulgarianSolitaireLevelSizes, OEIS`BulgarianSolitaireLeafSizes, OEIS`BulgarianSolitaireMaxDistance,
+       OEIS`BulgarianSolitaireCycleLengths}),
+    {OEIS`BulgarianSolitaireCycles::posint, OEIS`BulgarianSolitaireCycleCount::posint,
+     OEIS`BulgarianSolitaireGardenOfEdenCount::posint, OEIS`BulgarianSolitaireGardenOfEdenPartitions::posint,
+     OEIS`BulgarianSolitaireGraph::posint, OEIS`BulgarianSolitaireLevels::posint, OEIS`BulgarianSolitaireLevelSizes::posint,
+     OEIS`BulgarianSolitaireLeafSizes::posint, OEIS`BulgarianSolitaireMaxDistance::posint,
+     OEIS`BulgarianSolitaireCycleLengths::posint}],
+  ConstantArray[$Failed, 10],
+  TestID -> "all-n-functions-fail"
+]
+VerificationTest[
+  OEIS`BulgarianSolitaireGraph[0, VertexLabels -> "Name"], $Failed, {OEIS`BulgarianSolitaireGraph::posint},
+  TestID -> "graph-with-options-message"
+]
+VerificationTest[
+  {OEIS`BulgarianSolitaireQuasiLevelSize[-1], OEIS`BulgarianSolitaireQuasiLeafSize[1/2]}, {$Failed, $Failed},
+  {OEIS`BulgarianSolitaireQuasiLevelSize::nonnegint, OEIS`BulgarianSolitaireQuasiLeafSize::nonnegint},
+  TestID -> "d-message"
+]
+VerificationTest[
+  {OEIS`BulgarianSolitaireQuasiLevelSize[0], OEIS`BulgarianSolitaireQuasiLeafSize[0], OEIS`BulgarianSolitaireQuasiLevelSize[3]},
+  {1, 0, 8},
+  TestID -> "d-zero-is-valid"
+]
+VerificationTest[
+  StringContainsQ[ToString[OEIS`BulgarianSolitaireCycles::posint], "positive integer"], True,
+  TestID -> "posint-message-text"
+]

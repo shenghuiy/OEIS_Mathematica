@@ -249,11 +249,11 @@ BulgarianSolitaireReversedTree[l_?bsPartitionQ, opts___?OptionQ] := Module[{leve
 
 
 (* ::Subsection:: *)
-(*Invalid partitions*)
+(*Invalid arguments*)
 
 
 (* ::Text:: *)
-(*Every function that takes a partition gives a message and returns $Failed when its first argument is not one: a nonempty list of positive integers in non-increasing order. BulgarianSolitairePeriodicPartition does the same for a necklace that is not a nonempty list of 0s and 1s.*)
+(*Every function that takes a partition gives a message and returns $Failed when its first argument is not one: a nonempty list of positive integers in non-increasing order. BulgarianSolitairePeriodicPartition does the same for a necklace that is not a nonempty list of 0s and 1s The functions of an integer n give ::posint when n is not a positive integer, and the quasi-infinite level and leaf sizes give ::nonnegint when d is not a nonnegative integer.*)
 
 
 Scan[
@@ -269,6 +269,21 @@ MessageName[BulgarianSolitairePeriodicPartition, "necklace"] =
   "`1` is not a necklace: expected a nonempty list of 0s and 1s.";
 BulgarianSolitairePeriodicPartition[w_, ___] /; ! bsNecklaceQ[w] :=
   (Message[BulgarianSolitairePeriodicPartition::necklace, w]; $Failed)
+
+Scan[
+  Function[f,
+    MessageName[f, "posint"] = "`1` is not a positive integer.";
+    f[n_, ___] /; ! (IntegerQ[n] && n > 0) := (Message[f::posint, n]; $Failed)],
+  {BulgarianSolitaireCycles, BulgarianSolitaireCycleCount, BulgarianSolitaireGardenOfEdenCount,
+   BulgarianSolitaireGardenOfEdenPartitions, BulgarianSolitaireGraph, BulgarianSolitaireLevels,
+   BulgarianSolitaireLevelSizes, BulgarianSolitaireLeafSizes, BulgarianSolitaireMaxDistance,
+   BulgarianSolitaireCycleLengths}]
+
+Scan[
+  Function[f,
+    MessageName[f, "nonnegint"] = "`1` is not a nonnegative integer.";
+    f[d_] /; ! (IntegerQ[d] && d >= 0) := (Message[f::nonnegint, d]; $Failed)],
+  {BulgarianSolitaireQuasiLevelSize, BulgarianSolitaireQuasiLeafSize}]
 
 
 End[];
