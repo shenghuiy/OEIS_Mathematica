@@ -25,10 +25,34 @@ VerificationTest[
   TestID -> "step-preserves-sum"
 ]
 
-(* Arguments that are not partitions are not evaluated *)
+(* Arguments that are not partitions give a message and $Failed *)
 
-VerificationTest[OEIS`BulgarianSolitaireStep[{1, 2}], OEIS`BulgarianSolitaireStep[{1, 2}], TestID -> "not-a-partition-unevaluated"]
-VerificationTest[OEIS`BulgarianSolitaireStep[{}], OEIS`BulgarianSolitaireStep[{}], TestID -> "empty-unevaluated"]
+VerificationTest[OEIS`BulgarianSolitaireStep[{1, 2}], $Failed, {OEIS`BulgarianSolitaireStep::partition}, TestID -> "not-a-partition-message"]
+VerificationTest[OEIS`BulgarianSolitaireStep[{}], $Failed, {OEIS`BulgarianSolitaireStep::partition}, TestID -> "empty-message"]
+VerificationTest[OEIS`BulgarianSolitaireStep[{3, 0}], $Failed, {OEIS`BulgarianSolitaireStep::partition}, TestID -> "nonpositive-part-message"]
+VerificationTest[OEIS`BulgarianSolitaireStep[5], $Failed, {OEIS`BulgarianSolitaireStep::partition}, TestID -> "integer-message"]
+VerificationTest[
+  Quiet[
+    (#[{1, 2}] & /@ {OEIS`BulgarianSolitaireStep, OEIS`BulgarianSolitaireOrbit, OEIS`BulgarianSolitaireCycle,
+       OEIS`BulgarianSolitaireDistance, OEIS`BulgarianSolitairePeriodicQ, OEIS`BulgarianSolitaireGardenOfEdenQ,
+       OEIS`BulgarianSolitairePreimages, OEIS`BulgarianSolitaireRowMoves, OEIS`BulgarianSolitaireBasinLevelSizes,
+       OEIS`BulgarianSolitaireComponent, OEIS`BulgarianSolitaireReversedTree}),
+    {OEIS`BulgarianSolitaireStep::partition, OEIS`BulgarianSolitaireOrbit::partition, OEIS`BulgarianSolitaireCycle::partition,
+     OEIS`BulgarianSolitaireDistance::partition, OEIS`BulgarianSolitairePeriodicQ::partition,
+     OEIS`BulgarianSolitaireGardenOfEdenQ::partition, OEIS`BulgarianSolitairePreimages::partition,
+     OEIS`BulgarianSolitaireRowMoves::partition, OEIS`BulgarianSolitaireBasinLevelSizes::partition,
+     OEIS`BulgarianSolitaireComponent::partition, OEIS`BulgarianSolitaireReversedTree::partition}],
+  ConstantArray[$Failed, 11],
+  TestID -> "all-partition-functions-fail"
+]
+VerificationTest[
+  OEIS`BulgarianSolitaireReversedTree[{1, 2}, VertexLabels -> "Name"], $Failed,
+  {OEIS`BulgarianSolitaireReversedTree::partition}, TestID -> "reversed-tree-with-options-message"
+]
+VerificationTest[
+  StringContainsQ[ToString[OEIS`BulgarianSolitaireStep::partition], "not a partition"], True,
+  TestID -> "message-text"
+]
 
 
 (* Orbit, cycle, distance: the 15-card game in the article *)
