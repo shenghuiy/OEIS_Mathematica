@@ -205,7 +205,9 @@ BulgarianSolitaireRowMoves[l_?bsPartitionQ] := bsRowMoves[l]
 
 bsPeriodicFromNecklace[w_List] := With[{m1 = Length[w]}, DeleteCases[Table[m1 - i + w[[i]], {i, m1}], 0]]
 
-BulgarianSolitairePeriodicPartition[w_List /; w =!= {} && VectorQ[w, MatchQ[#, 0 | 1] &]] := bsPeriodicFromNecklace[w]
+bsNecklaceQ[w_] := ListQ[w] && w =!= {} && VectorQ[w, MatchQ[#, 0 | 1] &]
+
+BulgarianSolitairePeriodicPartition[w_?bsNecklaceQ] := bsPeriodicFromNecklace[w]
 
 bsBasinLevels[l_List] := Module[{d = bsOrbitData[l], cyc, seen, level, out = {}},
   cyc = Drop[First[d], Last[d]];
@@ -251,7 +253,7 @@ BulgarianSolitaireReversedTree[l_?bsPartitionQ, opts___?OptionQ] := Module[{leve
 
 
 (* ::Text:: *)
-(*Every function that takes a partition gives a message and returns $Failed when its first argument is not one: a nonempty list of positive integers in non-increasing order.*)
+(*Every function that takes a partition gives a message and returns $Failed when its first argument is not one: a nonempty list of positive integers in non-increasing order. BulgarianSolitairePeriodicPartition does the same for a necklace that is not a nonempty list of 0s and 1s.*)
 
 
 Scan[
@@ -262,6 +264,11 @@ Scan[
    BulgarianSolitairePeriodicQ, BulgarianSolitaireGardenOfEdenQ, BulgarianSolitairePreimages,
    BulgarianSolitaireRowMoves, BulgarianSolitaireBasinLevelSizes, BulgarianSolitaireComponent,
    BulgarianSolitaireReversedTree}]
+
+MessageName[BulgarianSolitairePeriodicPartition, "necklace"] =
+  "`1` is not a necklace: expected a nonempty list of 0s and 1s.";
+BulgarianSolitairePeriodicPartition[w_, ___] /; ! bsNecklaceQ[w] :=
+  (Message[BulgarianSolitairePeriodicPartition::necklace, w]; $Failed)
 
 
 End[];
