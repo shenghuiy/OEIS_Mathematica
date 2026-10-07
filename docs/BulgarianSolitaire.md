@@ -25,7 +25,7 @@ Nothing is compiled, so loading and the first call are instant. The computations
 
 ## Python version
 
-`src/python/bulgarian_solitaire.py` is a standard-library port with the same functions in snake case (`step`, `orbit`, `cycle`, `distance`, `is_periodic`, `cycles`, `cycle_count`, `is_garden_of_eden`, `garden_of_eden_count`, `garden_of_eden_partitions`, `preimages`, `graph`, `levels`, `level_sizes`, `leaf_sizes`, `quasi_level_size`, `quasi_leaf_size`, `row_moves`, `periodic_partition`, `basin_levels`, `basin_level_sizes`, `max_distance`, `cycle_lengths`, `component`, `reversed_tree`). Partitions are tuples, and `graph` returns a dict from each partition to its image instead of a `Graph`, and `reversed_tree` a dict from each partition to its children. The tests in `test/python/test_bulgarian_solitaire.py` mirror the Wolfram ones; run them from the repository root with `python -m unittest discover -s test/python`. All 39 tests pass (Python 3, about 1 s).
+`src/python/bulgarian_solitaire.py` is a standard-library port with the same functions in snake case (`step`, `orbit`, `cycle`, `distance`, `is_periodic`, `cycles`, `cycle_count`, `is_garden_of_eden`, `garden_of_eden_count`, `garden_of_eden_partitions`, `preimages`, `graph`, `levels`, `level_sizes`, `leaf_sizes`, `quasi_level_size`, `quasi_leaf_size`, `row_moves`, `periodic_partition`, `basin_levels`, `basin_level_sizes`, `max_distance`, `cycle_lengths`, `component`, `reversed_tree`). Partitions are tuples, and `graph` returns a dict from each partition to its image instead of a `Graph`, and `reversed_tree` a dict from each partition to its children. The tests in `test/python/test_bulgarian_solitaire.py` mirror the Wolfram ones; run them from the repository root with `python -m unittest discover -s test/python`. All 40 tests pass (Python 3, about 1 s).
 
 ## Public functions
 
@@ -39,7 +39,7 @@ Nothing is compiled, so loading and the first call are instant. The computations
 | `BulgarianSolitaireCycles[n]` | Every cycle of partitions of `n`, each rotated to start at its smallest partition. |
 | `BulgarianSolitaireCycleCount[n]` | The number of cycles of partitions of `n`, from Brandt's necklace formula, without building partitions. |
 | `BulgarianSolitaireGardenOfEdenQ[p]` | Whether `p` has no preimage, that is, its rank `p₁ − t` is at most −2. |
-| `BulgarianSolitaireGardenOfEdenCount[n]` | The number of Garden of Eden partitions of `n`, `ge(n) = p(n−3) − p(n−9) + p(n−18) − …`. |
+| `BulgarianSolitaireGardenOfEdenCount[n]` | The number of Garden of Eden partitions of `n`, `ge(n) = p(n−3) − p(n−9) + p(n−18) − …` ([A123975](https://oeis.org/A123975): 0, 0, 1, 1, 2, 3, 5, 7, 10, 14, 20, …). |
 | `BulgarianSolitaireGardenOfEdenPartitions[n]` | The Garden of Eden partitions of `n`. |
 | `BulgarianSolitairePreimages[p]` | The partitions that one move sends to `p`. |
 | `BulgarianSolitaireGraph[n, opts]` | The directed graph on the partitions of `n`, edge λ → B(λ). Options go to `Graph`. |
@@ -89,7 +89,8 @@ Garden of Eden partitions. `(4, 4, 3, 3, 2, 2, 2)` has rank −3 and no preimage
 ```wolfram
 OEIS`BulgarianSolitaireGardenOfEdenQ[{4, 4, 3, 3, 2, 2, 2}]   (* True *)
 OEIS`BulgarianSolitairePreimages[{6, 5}]                      (* {{7, 1, 1, 1, 1}, {6, 1, 1, 1, 1, 1}} *)
-OEIS`BulgarianSolitaireGardenOfEdenCount[20]                  (* p(17) − p(11) + p(2) *)
+OEIS`BulgarianSolitaireGardenOfEdenCount[20]                  (* p(17) − p(11) + p(2) = 190 *)
+OEIS`BulgarianSolitaireGardenOfEdenCount /@ Range[20]         (* A123975 *)
 ```
 
 Level sizes of the game tree for 10 cards (k = 4), the tree of Figure 2 in Eriksson and Jonsson, which has 42 vertices and height k(k − 1) = 12:
@@ -170,7 +171,7 @@ Pham also conjectures that `|O_(P^k)| = c_P^(k−1) |O_P|` with `c_P = c_P*` (fo
 
 ## Checks
 
-The tests in `test/wolfram/BulgarianSolitaire.wlt` all pass in Mathematica 15.0.1 (88 cases). To run them:
+The tests in `test/wolfram/BulgarianSolitaire.wlt` all pass in Mathematica 15.0.1 (89 cases). To run them:
 
 ```wolfram
 TestReport["test/wolfram/BulgarianSolitaire.wlt"]

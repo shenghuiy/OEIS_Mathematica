@@ -472,3 +472,12 @@ VerificationTest[
   {5, 2},
   TestID -> "reversed-tree-cycle-of-3"
 ]
+
+
+(* OEIS A123975: number of Garden of Eden partitions of n *)
+
+VerificationTest[
+  OEIS`BulgarianSolitaireGardenOfEdenCount /@ Range[20],
+  {0, 0, 1, 1, 2, 3, 5, 7, 10, 14, 20, 27, 37, 49, 66, 86, 113, 147, 190, 243},
+  TestID -> "ge-count-a123975"
+]

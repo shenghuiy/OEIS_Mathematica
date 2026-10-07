@@ -233,6 +233,12 @@ class BasinTests(unittest.TestCase):
             self.assertEqual(len(lv), 2 * ell, ell)
 
 
+class TestOeis(unittest.TestCase):
+    def test_garden_of_eden_count_a123975(self):
+        self.assertEqual([bs.garden_of_eden_count(n) for n in range(1, 21)],
+                         [0, 0, 1, 1, 2, 3, 5, 7, 10, 14, 20, 27, 37, 49, 66, 86, 113, 147, 190, 243])
+
+
 class TestComponents(unittest.TestCase):
     def test_max_distance(self):
         self.assertEqual([bs.max_distance(n) for n in range(1, 17)],
