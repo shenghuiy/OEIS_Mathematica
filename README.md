@@ -1,8 +1,9 @@
 # Mathematical Explorations
 
 [![Java tests](https://github.com/shenghuiy/OEIS_Mathematica/actions/workflows/maven.yml/badge.svg?branch=main)](https://github.com/shenghuiy/OEIS_Mathematica/actions/workflows/maven.yml)
+[![Python tests](https://github.com/shenghuiy/OEIS_Mathematica/actions/workflows/python.yml/badge.svg?branch=main)](https://github.com/shenghuiy/OEIS_Mathematica/actions/workflows/python.yml)
 
-Code for exploring OEIS sequences, doing advanced math research, and having fun along the way.
+A collection of research-grade tools for discrete mathematics and number theory: inverting arithmetic functions, sieving for exotic integer sequences, dissecting the dynamics of Bulgarian solitaire, and doing carry-less arithmetic. The code is written in Wolfram Language, Java and Python, checked against the literature, and explained page by page.
 
 <p align="center">
   <picture>
@@ -10,6 +11,14 @@ Code for exploring OEIS sequences, doing advanced math research, and having fun 
     <img src="docs/img/banner-light.png" alt="Mathematical Explorations: research code for OEIS sequences, with the A001333 Pell-Lucas tree" width="100%">
   </picture>
 </p>
+
+## Highlights
+
+- **Inverting arithmetic functions.** [`DivisorSigmaInverse`](docs/DivisorSigmaInverse.md) lists every x with σₖ(x) = n, and [`EulerPhiInverse`](docs/EulerPhiInverse.md) every x with φ(x) = n. Both are compiled with `FunctionCompile`; `EulerPhiInverse` returns all 220,281 solutions for n = 2²⁰·3⁵·5²·7 in about 0.06 s.
+- **Sieving for rare integers.** [A399539](docs/A399539.md) uses a compiled segmented sieve to find the numbers k with ψ(k) − φ(k) = d(k)⁴.
+- **Bulgarian solitaire, end to end.** [One package](docs/BulgarianSolitaire.md) covers orbits, cycles and Brandt's necklace count, Garden of Eden partitions (OEIS [A123975](https://oeis.org/A123975)), game-tree level sizes and the row-to-column game. It reproduces the closed forms in Pham's work on limiting level-size series, and tests her conjecture on every primitive necklace of length 3 to 5.
+- **Carry-less arithmetic.** [`CarrylessArithmetic`](docs/CarrylessArithmetic.md) ports David Applegate's dismal-arithmetic program to Java, matching the original C output line for line, and can be called from Mathematica through J/Link.
+- **Tested.** Java and Python tests run in CI; the Wolfram packages have `VerificationTest` suites that include the examples from the docs.
 
 ## Documentation
 
