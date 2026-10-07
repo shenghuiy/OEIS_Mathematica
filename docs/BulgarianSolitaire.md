@@ -118,7 +118,12 @@ Length[OEIS`BulgarianSolitaireComponent[{6, 4, 3, 1, 1}]]           (* 176 = p(1
 OEIS`BulgarianSolitaireReversedTree[{4, 3, 2, 1}, VertexLabels -> "Name"]
 ```
 
-The last call is the game tree for 10 cards drawn from the root, with 42 vertices and 41 edges (`TreeGraphQ` is `True`). For a cycle of length above 1, such as `{2, 1, 1}` (the cycle of partitions of 4), the result is a forest with one tree hanging from each cycle partition.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="img/BulgarianSolitaireTree10-dark.png">
+  <img src="img/BulgarianSolitaireTree10-light.png" alt="The game tree for 10 cards" width="100%">
+</picture>
+
+The picture above is Figure 2 of Eriksson and Jonsson: the partitions as digit strings, and each edge labelled with the index `j` of the part played in the reverse move. It is a recursive `Tree` whose children are an `Association` `j -> subtree`, so `Tree` draws the keys as edge labels (`Tree[root, <|1 -> Tree[…], 2 -> Tree[…]|>]`); the script is `img/BulgarianSolitaireTree10.wl`. It leaves out the loop `1` from the staircase to itself, which the paper draws as a leaf `T`. The last call is the game tree for 10 cards drawn from the root, with 42 vertices and 41 edges (`TreeGraphQ` is `True`). For a cycle of length above 1, such as `{2, 1, 1}` (the cycle of partitions of 4), the result is a forest with one tree hanging from each cycle partition.
 
 ### With Young tableaux
 
