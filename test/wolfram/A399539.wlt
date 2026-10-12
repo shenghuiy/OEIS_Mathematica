@@ -7,6 +7,15 @@ VerificationTest[
   TestID -> "load-package"
 ]
 
+(* Only A399539 is public. The pattern variable n and the helper isokSeg are in OEIS`Private`, so loading
+   the package does not shadow a Global`n made by a test file that ran earlier in the same kernel. *)
+
+VerificationTest[
+  NameQ /@ {"OEIS`n", "OEIS`isokSeg", "OEIS`Private`isokSeg"},
+  {False, False, True},
+  TestID -> "only-A399539-public"
+]
+
 
 (* First terms: k such that psi(k) - phi(k) = d(k)^4 *)
 
@@ -57,9 +66,9 @@ VerificationTest[
 
 (* The result does not depend on the block size *)
 
-VerificationTest[OEIS`isokSeg[10^6, 2^10], OEIS`isokSeg[10^6, 2^16], TestID -> "example-block-size-2^10"]
+VerificationTest[OEIS`Private`isokSeg[10^6, 2^10], OEIS`Private`isokSeg[10^6, 2^16], TestID -> "example-block-size-2^10"]
 VerificationTest[
-  AllTrue[{7, 1000}, OEIS`isokSeg[10^5, #] === OEIS`isokSeg[10^5, 2^16] &],
+  AllTrue[{7, 1000}, OEIS`Private`isokSeg[10^5, #] === OEIS`Private`isokSeg[10^5, 2^16] &],
   True,
   TestID -> "example-block-sizes-7-1000"
 ]

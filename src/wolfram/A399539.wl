@@ -3,7 +3,7 @@
 BeginPackage["OEIS`"];
 
 
-A399539[n_Integer?Positive]:=isokSeg[n,2^16]
+A399539::usage="A399539[n] gives the terms of A399539 up to n, in increasing order: every k <= n with psi(k) - phi(k) = d(k)^4, where psi is the Dedekind psi function, phi is Euler's totient and d(k) is the number of divisors of k.";
 
 
 Begin["`Private`"];
@@ -80,6 +80,9 @@ d["SetPart",i,2 d["Part",i]]];
 r=d["Part",i];
 If[psi["Part",i]-phi["Part",i]==r ^4,res["Append",lo+i-1]],{i,1,len}],{lo,1,nmax,bsize}];
 res["Elements"]]];
+
+
+A399539[n_Integer?Positive]:=isokSeg[n,2^16]
 
 
 End[];
