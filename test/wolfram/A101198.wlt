@@ -145,9 +145,7 @@ VerificationTest[
 ]
 
 
-(* Against the definition. The number partitioned is j, not n: when all the test files run in one kernel,
-   a Global`n made here would be shadowed by the OEIS`n that loading A399539.wl creates, and that
-   package's load-package test fails on the message. *)
+(* Against the definition *)
 
 VerificationTest[
   Table[OEIS`PartitionRankCount[m, j], {m, -6, 6}, {j, 1, 24}],
