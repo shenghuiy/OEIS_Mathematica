@@ -85,6 +85,20 @@ VerificationTest[
   TestID -> "oeis-b-file-single-term"
 ]
 
+(* Above n = 1000 a single term comes from the series division instead of the PartitionsP sum *)
+
+VerificationTest[
+  OEIS`A101198[2000],
+  33979575123567660975352441262897733715154891,
+  TestID -> "oeis-b-file-single-term-series"
+]
+
+VerificationTest[
+  Table[OEIS`PartitionRankCount[m, j], {m, {0, 1, 3, -2}}, {j, {1000, 1001}}],
+  Table[OEIS`Private`rankCountSum[Abs[m], j], {m, {0, 1, 3, -2}}, {j, {1000, 1001}}],
+  TestID -> "cutoff-both-methods-agree"
+]
+
 
 (* Against the definition. The number partitioned is j, not n: when all the test files run in one kernel,
    a Global`n made here would be shadowed by the OEIS`n that loading A399539.wl creates, and that

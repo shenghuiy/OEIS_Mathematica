@@ -5,7 +5,7 @@
 BeginPackage["OEIS`"];
 
 A101198::usage = "A101198[n] gives the number of partitions of n with rank 1, where the rank of a partition is its largest part minus its number of parts.";
-PartitionRankCount::usage = "PartitionRankCount[m, n] gives N(m, n), the number of partitions of n with rank m, as a sum of about Sqrt[2n/3] differences of partition numbers p(n - k(3k-1)/2 - |m| k) - p(n - k(3k+1)/2 - |m| k).";
+PartitionRankCount::usage = "PartitionRankCount[m, n] gives N(m, n), the number of partitions of n with rank m: for n <= 1000 as a sum of about Sqrt[2n/3] differences of partition numbers p(n - k(3k-1)/2 - |m| k) - p(n - k(3k+1)/2 - |m| k), and above that from the series division used by PartitionRankCountList.";
 PartitionRankCountList::usage = "PartitionRankCountList[m, nmax] gives {N(m, 1), ..., N(m, nmax)}, the numbers of partitions of 1, ..., nmax with rank m, from a single power series division.";
 
 Begin["`Private`"];
@@ -27,11 +27,19 @@ Begin["`Private`"];
 (*Expanding 1/Prod(1 - x^r) = Sum p(j) x^j and reading off the coefficient of x^n gives N(m, n) = Sum_{k>=1} (-1)^(k-1) (p(n - k(3k-1)/2 - m k) - p(n - k(3k+1)/2 - m k)), with p(j) = 0 for j < 0 (PartitionsP gives 0 there). The sum stops once k(3k-1)/2 + m k > n, after at most about Sqrt[2n/3] terms. For m = 1 the two offsets are k(3k+1)/2 and 3k(k+1)/2.*)
 
 
-rankCount[m_, n_] := Module[{k = 1, s = 0, e},
+(* ::Text:: *)
+(*In a fresh kernel the sum takes about 2 ms for n = 1000, but PartitionsP gets slow above that (0.35 s for n = 1500, 2.8 s for n = 10^4), while the whole list of the next subsection takes 0.04 s and 0.5 s. So for n > rankSumCutoff = 1000 one term is the last entry of that list.*)
+
+
+rankSumCutoff = 1000;
+
+rankCountSum[m_, n_] := Module[{k = 1, s = 0, e},
   While[(e = k (3 k - 1)/2 + m k) <= n,
     s += (-1)^(k - 1) (PartitionsP[n - e] - PartitionsP[n - e - k]);
     k++];
   s]
+
+rankCount[m_, n_] := If[n <= rankSumCutoff, rankCountSum[m, n], Last[rankCountList[m, n]]]
 
 PartitionRankCount[m_Integer, n_Integer?Positive] := rankCount[Abs[m], n]
 
