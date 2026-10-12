@@ -37,7 +37,7 @@ VerificationTest[
 ]
 
 
-(* Examples from docs/A101199.md and docs/A101200.md *)
+(* Examples from docs/A101199.md, docs/A101200.md and docs/A363213.md *)
 
 VerificationTest[
   {OEIS`PartitionRankCount[2, 10], OEIS`PartitionRankCount[-2, 10],
@@ -53,6 +53,13 @@ VerificationTest[
 ]
 
 VerificationTest[
+  {OEIS`PartitionRankCount[4, 11], Select[IntegerPartitions[11], First[#] - Length[#] == 4 &],
+   OEIS`PartitionRankCount[4, #] & /@ {100, 1000}},
+  {4, {{8, 1, 1, 1}, {7, 3, 1}, {7, 2, 2}, {6, 5}}, {5830179, 243788559114596781538994782094}},
+  TestID -> "example-A363213-a11"
+]
+
+VerificationTest[
   Table[OEIS`PartitionRankCount[m, j], {m, 2, 3}, {j, {100, 1000}}],
   {{6125805, 244998908722407460172535312442}, {6001064, 244493628703447115091045908799}},
   TestID -> "example-A101199-A101200-b-file"
@@ -61,13 +68,13 @@ VerificationTest[
 (* The two halves of the sum for rank m count the partitions with rank >= m and >= m + 1 *)
 
 VerificationTest[
-  Table[Sum[(-1)^(k - 1) PartitionsP[j - k (3 k - 1)/2 - m k], {k, 1, j}], {m, 2, 4}, {j, 1, 40}],
-  Table[Count[IntegerPartitions[j], p_ /; First[p] - Length[p] >= m], {m, 2, 4}, {j, 1, 40}],
+  Table[Sum[(-1)^(k - 1) PartitionsP[j - k (3 k - 1)/2 - m k], {k, 1, j}], {m, 2, 5}, {j, 1, 40}],
+  Table[Count[IntegerPartitions[j], p_ /; First[p] - Length[p] >= m], {m, 2, 5}, {j, 1, 40}],
   TestID -> "example-rank-at-least-m"
 ]
 
 
-(* The DATA sections of the OEIS entries for ranks 0 to 3, an independent source *)
+(* The DATA sections of the OEIS entries for ranks 0 to 4, an independent source *)
 
 VerificationTest[
   OEIS`PartitionRankCountList[1, 52],
@@ -99,6 +106,14 @@ VerificationTest[
    304, 359, 440, 519, 634, 743, 901, 1060, 1273, 1494, 1789, 2092, 2491, 2914, 3449, 4026, 4752, 5530, 6502,
    7561, 8852, 10272, 11997, 13889, 16171, 18695, 21700, 25041, 29002},
   TestID -> "oeis-A101200-rank-3"
+]
+
+VerificationTest[
+  OEIS`PartitionRankCountList[4, 57],
+  {0, 0, 0, 0, 1, 0, 1, 1, 2, 2, 4, 4, 6, 7, 11, 12, 18, 20, 28, 33, 44, 51, 68, 80, 103, 122, 154, 182, 229,
+   270, 334, 396, 485, 572, 698, 822, 993, 1169, 1404, 1649, 1971, 2310, 2745, 3214, 3803, 4439, 5235, 6099,
+   7162, 8331, 9750, 11315, 13205, 15294, 17794, 20574, 23872},
+  TestID -> "oeis-A363213-rank-4"
 ]
 
 (* Values from the b-file of A101198 (Seiichi Manyama, n = 1..10000) *)

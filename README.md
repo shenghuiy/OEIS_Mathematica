@@ -47,8 +47,8 @@ Functions published in the Wolfram Function Repository, linked directly since th
 - [A399539](docs/A399539.md): `src/wolfram/A399539.wl`, a compiled segmented sieve for numbers k with ψ(k) − φ(k) = d(k)⁴, with timings and the checks run in Mathematica.
 - [A157196](docs/A157196.md): `src/wolfram/A157196.wl`, a string construction for the self-describing sequence of 1s and 2s, with the checks run in Mathematica.
 - [A003785](docs/A003785.md): `src/wolfram/A003785.wl`, a Mathematica translation of the OEIS PARI program built from eta-function products.
-- [A101198](docs/A101198.md): `src/wolfram/A101198.wl`, the number of partitions of n with rank 1, and with any rank m (A047993, A101199, A101200), from Dyson's rank generating function as proved by Atkin and Swinnerton-Dyer.
-- [A101199](docs/A101199.md) and [A101200](docs/A101200.md): the numbers of partitions of n with rank 2 and 3, computed by `PartitionRankCount` from the A101198 package, with the formula for each rank.
+- [A101198](docs/A101198.md): `src/wolfram/A101198.wl`, the number of partitions of n with rank 1, and with any rank m (A047993, A101199, A101200, A363213), from Dyson's rank generating function as proved by Atkin and Swinnerton-Dyer.
+- [A101199](docs/A101199.md), [A101200](docs/A101200.md) and [A363213](docs/A363213.md): the numbers of partitions of n with rank 2, 3 and 4, computed by `PartitionRankCount` from the A101198 package, with the formula for each rank.
 - [A123975](https://oeis.org/A123975): the number of Garden of Eden partitions of n in Bulgarian solitaire, computed by [`BulgarianSolitaireGardenOfEdenCount`](src/wolfram/BulgarianSolitaire.wl#L129) from the Hopkins–Sellers formula p(n−3) − p(n−9) + p(n−18) − …; see the [Bulgarian solitaire](docs/BulgarianSolitaire.md) page.
 
 Tests for the Java code are described in [`test/java/README.md`](test/java/README.md), and tests for the Wolfram code in [`test/wolfram/README.md`](test/wolfram/README.md).
