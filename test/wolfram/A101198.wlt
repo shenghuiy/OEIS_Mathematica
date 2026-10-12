@@ -60,7 +60,7 @@ VerificationTest[
 ]
 
 VerificationTest[
-  Table[OEIS`PartitionRankCount[m, j], {m, 2, 3}, {j, {100, 1000}}],
+  Table[OEIS`PartitionRankCount[m, n], {m, 2, 3}, {n, {100, 1000}}],
   {{6125805, 244998908722407460172535312442}, {6001064, 244493628703447115091045908799}},
   TestID -> "example-A101199-A101200-b-file"
 ]
@@ -68,8 +68,8 @@ VerificationTest[
 (* The two halves of the sum for rank m count the partitions with rank >= m and >= m + 1 *)
 
 VerificationTest[
-  Table[Sum[(-1)^(k - 1) PartitionsP[j - k (3 k - 1)/2 - m k], {k, 1, j}], {m, 2, 5}, {j, 1, 40}],
-  Table[Count[IntegerPartitions[j], p_ /; First[p] - Length[p] >= m], {m, 2, 5}, {j, 1, 40}],
+  Table[Sum[(-1)^(k - 1) PartitionsP[n - k (3 k - 1)/2 - m k], {k, 1, n}], {m, 2, 5}, {n, 1, 40}],
+  Table[Count[IntegerPartitions[n], p_ /; First[p] - Length[p] >= m], {m, 2, 5}, {n, 1, 40}],
   TestID -> "example-rank-at-least-m"
 ]
 
@@ -139,8 +139,8 @@ VerificationTest[
 ]
 
 VerificationTest[
-  Table[OEIS`PartitionRankCount[m, j], {m, {0, 1, 3, -2}}, {j, {1000, 1001}}],
-  Table[OEIS`Private`rankCountSum[Abs[m], j], {m, {0, 1, 3, -2}}, {j, {1000, 1001}}],
+  Table[OEIS`PartitionRankCount[m, n], {m, {0, 1, 3, -2}}, {n, {1000, 1001}}],
+  Table[OEIS`Private`rankCountSum[Abs[m], n], {m, {0, 1, 3, -2}}, {n, {1000, 1001}}],
   TestID -> "cutoff-both-methods-agree"
 ]
 
@@ -148,27 +148,27 @@ VerificationTest[
 (* Against the definition *)
 
 VerificationTest[
-  Table[OEIS`PartitionRankCount[m, j], {m, -6, 6}, {j, 1, 24}],
-  Table[Count[IntegerPartitions[j], p_ /; First[p] - Length[p] == m], {m, -6, 6}, {j, 1, 24}],
+  Table[OEIS`PartitionRankCount[m, n], {m, -6, 6}, {n, 1, 24}],
+  Table[Count[IntegerPartitions[n], p_ /; First[p] - Length[p] == m], {m, -6, 6}, {n, 1, 24}],
   TestID -> "brute-force"
 ]
 
 VerificationTest[
   Table[OEIS`PartitionRankCountList[m, 300], {m, -3, 4}],
-  Table[OEIS`PartitionRankCount[m, j], {m, -3, 4}, {j, 1, 300}],
+  Table[OEIS`PartitionRankCount[m, n], {m, -3, 4}, {n, 1, 300}],
   TestID -> "list-matches-single-terms"
 ]
 
-(* Ranks run from 1 - j (all parts 1) to j - 1 (one part j) *)
+(* Ranks run from 1 - n (all parts 1) to n - 1 (one part n) *)
 
 VerificationTest[
-  Table[Sum[OEIS`PartitionRankCount[m, j], {m, 1 - j, j - 1}], {j, 1, 60}],
+  Table[Sum[OEIS`PartitionRankCount[m, n], {m, 1 - n, n - 1}], {n, 1, 60}],
   PartitionsP[Range[60]],
   TestID -> "ranks-sum-to-p"
 ]
 
 VerificationTest[
-  Table[{OEIS`PartitionRankCount[j - 1, j], OEIS`PartitionRankCount[j, j], OEIS`PartitionRankCount[1 - j, j]}, {j, 1, 12}],
+  Table[{OEIS`PartitionRankCount[n - 1, n], OEIS`PartitionRankCount[n, n], OEIS`PartitionRankCount[1 - n, n]}, {n, 1, 12}],
   ConstantArray[{1, 0, 1}, 12],
   TestID -> "extreme-ranks"
 ]
@@ -183,8 +183,8 @@ VerificationTest[
    of the Garden of Eden partitions (rank <= -2) in docs/BulgarianSolitaire.md *)
 
 VerificationTest[
-  Table[Sum[OEIS`PartitionRankCount[m, j], {m, 2, j}], {j, 1, 60}],
-  Table[Sum[(-1)^(k + 1) PartitionsP[j - 3 k (k + 1)/2], {k, 1, j}], {j, 1, 60}],
+  Table[Sum[OEIS`PartitionRankCount[m, n], {m, 2, n}], {n, 1, 60}],
+  Table[Sum[(-1)^(k + 1) PartitionsP[n - 3 k (k + 1)/2], {k, 1, n}], {n, 1, 60}],
   TestID -> "rank-at-least-2-hopkins-sellers"
 ]
 
