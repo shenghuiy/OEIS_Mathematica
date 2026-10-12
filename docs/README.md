@@ -12,6 +12,7 @@ Explanations of the code in this repository, one page per component.
 | [A101199: partitions of n with rank 2](A101199.md) | `PartitionRankCount[2, n]` from `src/wolfram/A101198.wl`: the sequence, calling it, the formula for rank 2 and how its two halves count ranks at least 2 and at least 3, and the checks run |
 | [A101200: partitions of n with rank 3](A101200.md) | `PartitionRankCount[3, n]` from `src/wolfram/A101198.wl`: the sequence, calling it, the formula for rank 3, and the checks run |
 | [A363213: partitions of n with rank 4](A363213.md) | `PartitionRankCount[4, n]` from `src/wolfram/A101198.wl`: the sequence, calling it, the formula for rank 4, and the checks run |
+| [A363214: partitions of n with rank 5](A363214.md) | `PartitionRankCount[5, n]` from `src/wolfram/A101198.wl`: the sequence, calling it, the formula for rank 5, and the checks run |
 | [A003785: eta-quotient sequence](A003785.md) | `src/wolfram/A003785.wl`: the translation of the OEIS PARI program, how PARI's `eta` maps to `QPochhammer`, and how to check it |
 | [Bulgarian solitaire](BulgarianSolitaire.md) | `src/wolfram/BulgarianSolitaire.wl`: the move, orbits, cycles (Toom's criterion and Brandt's necklace count), Garden of Eden partitions, the level sizes of the game tree, and the row-to-column game, with the checks to run in Mathematica |
 | [DivisorSigmaInverse: σₖ(x) = n](DivisorSigmaInverse.md) | `src/wolfram/DivisorSigmaInverse.wl`: finding every x with σₖ(x) = n, loading and calling it, the divisor dynamic program behind it, and the checks run in Mathematica |
