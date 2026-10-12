@@ -40,6 +40,10 @@ Functions published in the Wolfram Function Repository, linked directly since th
 - [FindFanoPlaneIsomorphism](https://resources.wolframcloud.com/FunctionRepository/resources/FindFanoPlaneIsomorphism/): finds an isomorphism between Fano planes.
 - [ParkingFunctionQ](https://resources.wolframcloud.com/FunctionRepository/resources/ParkingFunctionQ/): tests whether a list is a parking function.
 - [ParkingFunctionToDyckWords](https://resources.wolframcloud.com/FunctionRepository/resources/ParkingFunctionToDyckWords/): converts a parking function to Dyck words.
+- [EulerianNumberTriangle](https://resources.wolframcloud.com/FunctionRepository/resources/EulerianNumberTriangle/): the triangle of Eulerian numbers.
+- [DivisorHasseDiagram](https://resources.wolframcloud.com/FunctionRepository/resources/DivisorHasseDiagram/): the Hasse diagram of the divisors of an integer under divisibility.
+- [PermutationExcedances](https://resources.wolframcloud.com/FunctionRepository/resources/PermutationExcedances/): the excedances of a permutation.
+- [DistinctCompactBinaryHuffmanCode](https://resources.wolframcloud.com/FunctionRepository/resources/DistinctCompactBinaryHuffmanCode/): distinct compact binary Huffman codes.
 
 ### OEIS sequences
 
