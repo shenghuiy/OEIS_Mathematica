@@ -37,6 +37,36 @@ VerificationTest[
 ]
 
 
+(* Examples from docs/A101199.md and docs/A101200.md *)
+
+VerificationTest[
+  {OEIS`PartitionRankCount[2, 10], OEIS`PartitionRankCount[-2, 10],
+   Select[IntegerPartitions[10], First[#] - Length[#] == 2 &]},
+  {3, 3, {{6, 2, 1, 1}, {5, 4, 1}, {5, 3, 2}}},
+  TestID -> "example-A101199-a10"
+]
+
+VerificationTest[
+  {OEIS`PartitionRankCount[3, 11], Select[IntegerPartitions[11], First[#] - Length[#] == 3 &]},
+  {3, {{7, 2, 1, 1}, {6, 4, 1}, {6, 3, 2}}},
+  TestID -> "example-A101200-a11"
+]
+
+VerificationTest[
+  Table[OEIS`PartitionRankCount[m, j], {m, 2, 3}, {j, {100, 1000}}],
+  {{6125805, 244998908722407460172535312442}, {6001064, 244493628703447115091045908799}},
+  TestID -> "example-A101199-A101200-b-file"
+]
+
+(* The two halves of the sum for rank m count the partitions with rank >= m and >= m + 1 *)
+
+VerificationTest[
+  Table[Sum[(-1)^(k - 1) PartitionsP[j - k (3 k - 1)/2 - m k], {k, 1, j}], {m, 2, 4}, {j, 1, 40}],
+  Table[Count[IntegerPartitions[j], p_ /; First[p] - Length[p] >= m], {m, 2, 4}, {j, 1, 40}],
+  TestID -> "example-rank-at-least-m"
+]
+
+
 (* The DATA sections of the OEIS entries for ranks 0 to 3, an independent source *)
 
 VerificationTest[
