@@ -14,8 +14,8 @@ A collection of research-grade tools for discrete mathematics and number theory:
 
 ## Highlights
 
-- **Inverting arithmetic functions.** [`DivisorSigmaInverse`](docs/DivisorSigmaInverse.md) lists every x with σₖ(x) = n, and [`EulerPhiInverse`](docs/EulerPhiInverse.md) every x with φ(x) = n. Both are compiled with `FunctionCompile`; `EulerPhiInverse` returns all 220,281 solutions for n = 2²⁰·3⁵·5²·7 in about 0.06 s.
-- **Sieving for rare integers.** [A399539](docs/A399539.md) uses a compiled segmented sieve to find the numbers k with ψ(k) − φ(k) = d(k)⁴.
+- **Inverting arithmetic functions.** [`DivisorSigmaInverse`](docs/DivisorSigmaInverse.md) lists every $x$ with $\sigma_k(x) = n$, and [`EulerPhiInverse`](docs/EulerPhiInverse.md) every $x$ with $\varphi(x) = n$. Both are compiled with `FunctionCompile`; `EulerPhiInverse` returns all 220,281 solutions for $n = 2^{20} \cdot 3^5 \cdot 5^2 \cdot 7$ in about 0.06 s.
+- **Sieving for rare integers.** [A399539](docs/A399539.md) uses a compiled segmented sieve to find the numbers $k$ with $\psi(k) - \varphi(k) = d(k)^4$.
 - **Bulgarian solitaire, end to end.** [One package](docs/BulgarianSolitaire.md) covers orbits, cycles and Brandt's necklace count, Garden of Eden partitions (OEIS [A123975](https://oeis.org/A123975)), game-tree level sizes and the row-to-column game. It reproduces the closed forms in Pham's work on limiting level-size series, and tests her conjecture on every primitive necklace of length 3 to 5.
 - **Carry-less arithmetic.** [`CarrylessArithmetic`](docs/CarrylessArithmetic.md) ports David Applegate's dismal-arithmetic program to Java, matching the original C output line for line, and can be called from Mathematica through J/Link.
 - **Tested.** Java and Python tests run in CI; the Wolfram packages have `VerificationTest` suites that include the examples from the docs.
@@ -27,9 +27,9 @@ Explanations of the code in this repository are in [`docs/`](docs/README.md).
 ### Functions
 
 - [Carry-less (dismal) arithmetic in Java](docs/CarrylessArithmetic.md): `src/java/CarrylessArithmetic.java`, its methods, and how to call it from Java and from Mathematica via J/Link.
-- [DivisorSigmaInverse](docs/DivisorSigmaInverse.md): `src/wolfram/DivisorSigmaInverse.wl`, a Mathematica port of `invsigmaDiv` from Max Alekseyev's `invphi.gp`; `invSigmaDivisors[n, k]` lists every x with σₖ(x) equal to each divisor of n, `DivisorSigmaInverse[n, k]` gives the solutions for n itself, and `DivisorSigmaInverseCount[n, k]` counts them.
+- [DivisorSigmaInverse](docs/DivisorSigmaInverse.md): `src/wolfram/DivisorSigmaInverse.wl`, a Mathematica port of `invsigmaDiv` from Max Alekseyev's `invphi.gp`; `invSigmaDivisors[n, k]` lists every $x$ with $\sigma_k(x)$ equal to each divisor of $n$, `DivisorSigmaInverse[n, k]` gives the solutions for $n$ itself, and `DivisorSigmaInverseCount[n, k]` counts them.
 - [Bulgarian solitaire](docs/BulgarianSolitaire.md): `src/wolfram/BulgarianSolitaire.wl`, the solitaire move on partitions with orbits, cycles and their count, Garden of Eden partitions, game-tree level sizes, and the row-to-column game.
-- [EulerPhiInverse](docs/EulerPhiInverse.md): `src/wolfram/EulerPhiInverse.wl`, a compiled depth-first search for every x with φ(x) = n; `EulerPhiInverse[n]` returns them sorted.
+- [EulerPhiInverse](docs/EulerPhiInverse.md): `src/wolfram/EulerPhiInverse.wl`, a compiled depth-first search for every $x$ with $\varphi(x) = n$; `EulerPhiInverse[n]` returns them sorted.
 
 ### Wolfram Function Repository
 
@@ -44,12 +44,12 @@ Functions published in the Wolfram Function Repository, linked directly since th
 ### OEIS sequences
 
 - [A316667](docs/A316667.md): `src/wolfram/A316667.wl`, the trapped knight walk on the square-spiral chessboard.
-- [A399539](docs/A399539.md): `src/wolfram/A399539.wl`, a compiled segmented sieve for numbers k with ψ(k) − φ(k) = d(k)⁴, with timings and the checks run in Mathematica.
+- [A399539](docs/A399539.md): `src/wolfram/A399539.wl`, a compiled segmented sieve for numbers $k$ with $\psi(k) - \varphi(k) = d(k)^4$, with timings and the checks run in Mathematica.
 - [A157196](docs/A157196.md): `src/wolfram/A157196.wl`, a string construction for the self-describing sequence of 1s and 2s, with the checks run in Mathematica.
 - [A003785](docs/A003785.md): `src/wolfram/A003785.wl`, a Mathematica translation of the OEIS PARI program built from eta-function products.
 - [A101198](docs/A101198.md): `src/wolfram/A101198.wl`, the number of partitions of n with rank 1, and with any rank m (A047993, A101199, A101200, A363213, A363214), from Dyson's rank generating function as proved by Atkin and Swinnerton-Dyer.
 - [A101199](docs/A101199.md), [A101200](docs/A101200.md), [A363213](docs/A363213.md) and [A363214](docs/A363214.md): the numbers of partitions of n with rank 2, 3, 4 and 5, computed by `PartitionRankCount` from the A101198 package, with the formula for each rank.
-- [A123975](https://oeis.org/A123975): the number of Garden of Eden partitions of n in Bulgarian solitaire, computed by [`BulgarianSolitaireGardenOfEdenCount`](src/wolfram/BulgarianSolitaire.wl#L129) from the Hopkins–Sellers formula p(n−3) − p(n−9) + p(n−18) − …; see the [Bulgarian solitaire](docs/BulgarianSolitaire.md) page.
+- [A123975](https://oeis.org/A123975): the number of Garden of Eden partitions of $n$ in Bulgarian solitaire, computed by [`BulgarianSolitaireGardenOfEdenCount`](src/wolfram/BulgarianSolitaire.wl#L129) from the Hopkins–Sellers formula $p(n-3) - p(n-9) + p(n-18) - \cdots$; see the [Bulgarian solitaire](docs/BulgarianSolitaire.md) page.
 
 Tests for the Java code are described in [`test/java/README.md`](test/java/README.md), and tests for the Wolfram code in [`test/wolfram/README.md`](test/wolfram/README.md).
 
