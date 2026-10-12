@@ -1,6 +1,6 @@
 # Bulgarian solitaire
 
-`src/wolfram/BulgarianSolitaire.wl` is a Wolfram Language package (context `OEIS`) for Bulgarian solitaire on integer partitions. A move takes one card from every pile and makes a new pile of those cards. In partition terms, `B(λ) = (t, λ₁ − 1, …, λ_t − 1)` where t is the number of parts, zeros are dropped, and the result is re-sorted. The package follows five papers:
+`src/wolfram/BulgarianSolitaire.wl` is a Wolfram Language package (context `OEIS`) for Bulgarian solitaire on integer partitions. A move takes one card from every pile and makes a new pile of those cards. In partition terms, $B(\lambda) = (t, \lambda_1 - 1, \dots, \lambda_t - 1)$ where $t$ is the number of parts, zeros are dropped, and the result is re-sorted. The package follows five papers:
 
 - B. Hopkins, *30 Years of Bulgarian Solitaire*, College Math. J. 43 (2012): history, the move, Garden of Eden partitions, and the row-to-column game.
 - T. Hart, G. Khan, M. Khan, *Revisiting Toom's proof of Bulgarian solitaire*, Ann. Sci. Math. Québec 36 (2012): the diagonal criterion for cycles, and Brandt's necklace count.
@@ -10,7 +10,7 @@
 
 Partitions are lists of positive integers in non-increasing order, so `{6, 4, 3, 1, 1}` is five piles. A function that takes a partition gives a message (`BulgarianSolitaireStep::partition`, and so on) and returns `$Failed` when its first argument is not one: `OEIS`BulgarianSolitaireStep[{1, 2}]` and `OEIS`BulgarianSolitaireStep[{}]` both fail this way. `BulgarianSolitairePeriodicPartition` does the same for a necklace that is not a nonempty list of 0s and 1s (`BulgarianSolitairePeriodicPartition::necklace`). The functions of an integer `n` give `::posint` (for example `BulgarianSolitaireCycleCount::posint`) and return `$Failed` when `n` is not a positive integer, and `BulgarianSolitaireQuasiLevelSize` and `BulgarianSolitaireQuasiLeafSize` give `::nonnegint` when `d` is not a nonnegative integer.
 
-**Notation.** `F(m)` is the m-th Fibonacci number: F(0) = 0, F(1) = 1, F(m) = F(m−1) + F(m−2), so F(0), F(1), F(2), … is 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, … In Wolfram code `F(m)` is `Fibonacci[m]`, and in the Python port it is the helper `_fib(m)`. `p(m)` is the number of partitions of m, `PartitionsP[m]` in Wolfram.
+**Notation.** $F(m)$ is the $m$-th Fibonacci number: $F(0) = 0$, $F(1) = 1$, $F(m) = F(m-1) + F(m-2)$, so $F(0), F(1), F(2), \dots$ is 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, … In Wolfram code $F(m)$ is `Fibonacci[m]`, and in the Python port it is the helper `_fib(m)`. $p(m)$ is the number of partitions of $m$, `PartitionsP[m]` in Wolfram.
 
 ## Loading and calling
 
@@ -38,20 +38,20 @@ Nothing is compiled, so loading and the first call are instant. The computations
 | `BulgarianSolitairePeriodicQ[p]` | Whether `p` lies on a cycle, by Toom's diagonal criterion (no iteration). |
 | `BulgarianSolitaireCycles[n]` | Every cycle of partitions of `n`, each rotated to start at its smallest partition. |
 | `BulgarianSolitaireCycleCount[n]` | The number of cycles of partitions of `n`, from Brandt's necklace formula, without building partitions. |
-| `BulgarianSolitaireGardenOfEdenQ[p]` | Whether `p` has no preimage, that is, its rank `p₁ − t` is at most −2. |
-| `BulgarianSolitaireGardenOfEdenCount[n]` | The number of Garden of Eden partitions of `n`, `ge(n) = p(n−3) − p(n−9) + p(n−18) − …` ([A123975](https://oeis.org/A123975): 0, 0, 1, 1, 2, 3, 5, 7, 10, 14, 20, …). |
+| `BulgarianSolitaireGardenOfEdenQ[p]` | Whether `p` has no preimage, that is, its rank $p_1 - t$ is at most $-2$. |
+| `BulgarianSolitaireGardenOfEdenCount[n]` | The number of Garden of Eden partitions of `n`, $ge(n) = p(n-3) - p(n-9) + p(n-18) - \cdots$ ([A123975](https://oeis.org/A123975): 0, 0, 1, 1, 2, 3, 5, 7, 10, 14, 20, …). |
 | `BulgarianSolitaireGardenOfEdenPartitions[n]` | The Garden of Eden partitions of `n`. |
 | `BulgarianSolitairePreimages[p]` | The partitions that one move sends to `p`. |
-| `BulgarianSolitaireGraph[n, opts]` | The directed graph on the partitions of `n`, edge λ → B(λ). Options go to `Graph`. |
+| `BulgarianSolitaireGraph[n, opts]` | The directed graph on the partitions of `n`, edge $\lambda \to B(\lambda)$. Options go to `Graph`. |
 | `BulgarianSolitaireLevels[n]` | The partitions of `n` grouped by distance to the cycles. |
-| `BulgarianSolitaireLevelSizes[n]` | The size of each group. For `n = k(k+1)/2` these are the level sizes of the game tree rooted at the staircase. |
+| `BulgarianSolitaireLevelSizes[n]` | The size of each group. For $n = k(k+1)/2$ these are the level sizes of the game tree rooted at the staircase. |
 | `BulgarianSolitaireLeafSizes[n]` | The number of Garden of Eden partitions in each group, that is, the leaves on each level. |
-| `BulgarianSolitaireQuasiLevelSize[d]` | The level size `F(2d)` (1 for `d = 0`) of the quasi-infinite game, `k → ∞`. |
-| `BulgarianSolitaireQuasiLeafSize[d]` | The leaf count `(F(2d−2) − F(d−1))/2` of the quasi-infinite game. |
+| `BulgarianSolitaireQuasiLevelSize[d]` | The level size $F(2d)$ (1 for $d = 0$) of the quasi-infinite game, $k \to \infty$. |
+| `BulgarianSolitaireQuasiLeafSize[d]` | The leaf count $(F(2d-2) - F(d-1))/2$ of the quasi-infinite game. |
 | `BulgarianSolitaireRowMoves[p]` | The partitions reached by changing any one row of the Ferrers diagram into a column. |
-| `BulgarianSolitairePeriodicPartition[w]` | The cycle partition for the necklace `w`, a list of m + 1 beads (1 = filled cell on diagonal m + 1, 0 = empty). |
+| `BulgarianSolitairePeriodicPartition[w]` | The cycle partition for the necklace `w`, a list of $m + 1$ beads (1 = filled cell on diagonal $m + 1$, 0 = empty). |
 | `BulgarianSolitaireBasinLevelSizes[p]` | The number of partitions at each distance from the cycle `p` ends in, counting only the partitions that flow into that cycle. Level 0 is the cycle. |
-| `BulgarianSolitaireMaxDistance[n]` | The largest distance to a cycle over all partitions of `n`, the height of the game tree. For `n = k(k+1)/2` it is `k(k−1)` (Igusa). |
+| `BulgarianSolitaireMaxDistance[n]` | The largest distance to a cycle over all partitions of `n`, the height of the game tree. For $n = k(k+1)/2$ it is $k(k-1)$ (Igusa). |
 | `BulgarianSolitaireCycleLengths[n]` | The sorted lengths of the cycles of partitions of `n`, one entry per cycle. |
 | `BulgarianSolitaireComponent[p]` | The connected component of `p`: its cycle and every partition that flows into it, ordered by distance from the cycle. |
 | `BulgarianSolitaireReversedTree[p, opts]` | The component of `p` with the edges reversed (each partition points to its preimages), without the edges into the cycle. Options go to `Graph`. |
@@ -93,7 +93,7 @@ OEIS`BulgarianSolitaireGardenOfEdenCount[20]                  (* p(17) − p(11)
 OEIS`BulgarianSolitaireGardenOfEdenCount /@ Range[20]         (* A123975 *)
 ```
 
-Level sizes of the game tree for 10 cards (k = 4), the tree of Figure 2 in Eriksson and Jonsson, which has 42 vertices and height k(k − 1) = 12:
+Level sizes of the game tree for 10 cards ($k = 4$), the tree of Figure 2 in Eriksson and Jonsson, which has 42 vertices and height $k(k - 1) = 12$:
 
 ```wolfram
 OEIS`BulgarianSolitaireLevelSizes[10]   (* {1, 1, 3, 5, 5, 3, 4, 4, 4, 3, 3, 3, 3} *)
@@ -101,13 +101,13 @@ OEIS`BulgarianSolitaireLeafSizes[10]    (* {0, 0, 0, 1, 3, 1, 1, 1, 2, 1, 1, 0, 
 OEIS`BulgarianSolitaireGraph[10, VertexLabels -> "Name"]
 ```
 
-Level sizes of one cycle: the necklace BW repeated ℓ times (Pham, Harris–Nguyen):
+Level sizes of one cycle: the necklace BW repeated $\ell$ times (Pham, Harris–Nguyen):
 
 ```wolfram
 OEIS`BulgarianSolitaireBasinLevelSizes[OEIS`BulgarianSolitairePeriodicPartition[{1, 0, 1, 0, 1, 0, 1, 0}]]
 ```
 
-For ℓ = 4 (n = 32) this gives `{2, 1, 3, 7, 14, 24, 28, 18}`; for ℓ = 5 (n = 50) `{2, 1, 3, 7, 15, 32, 60, 92, 96, 54}`.
+For $\ell = 4$ ($n = 32$) this gives `{2, 1, 3, 7, 14, 24, 28, 18}`; for $\ell = 5$ ($n = 50$) `{2, 1, 3, 7, 15, 32, 60, 92, 96, 54}`.
 
 Height, cycle lengths, components and the reversed tree:
 
@@ -130,14 +130,14 @@ The picture above is Figure 2 of Eriksson and Jonsson: the partitions as digit s
 
 The Function Repository's [HookLengths](https://resources.wolframcloud.com/FunctionRepository/resources/HookLengths/) and [StandardYoungTableaux](https://resources.wolframcloud.com/FunctionRepository/resources/StandardYoungTableaux/) take a partition, so they apply directly to the partitions here (the first call downloads the function).
 
-The hook lengths of the 15-card starting partition, and of the staircase it ends on, whose hooks are the odd numbers 1, 3, …, 2k − 1 along each row:
+The hook lengths of the 15-card starting partition, and of the staircase it ends on, whose hooks are the odd numbers $1, 3, \dots, 2k - 1$ along each row:
 
 ```wolfram
 ResourceFunction["HookLengths"][{6, 4, 3, 1, 1}]   (* {{10, 7, 6, 4, 2, 1}, {7, 4, 3, 1}, {5, 2, 1}, {2}, {1}} *)
 ResourceFunction["HookLengths"][{5, 4, 3, 2, 1}]   (* {{9, 7, 5, 3, 1}, {7, 5, 3, 1}, {5, 3, 1}, {3, 1}, {1}} *)
 ```
 
-The hook length formula `n!/∏ hooks` counts the standard Young tableaux of a shape without listing them. Along the orbit of `{6, 4, 3, 1, 1}` it gives
+The hook length formula $n!/\prod \text{hooks}$ counts the standard Young tableaux of a shape without listing them. Along the orbit of `{6, 4, 3, 1, 1}` it gives
 
 ```wolfram
 hookCount[p_] := Total[p]!/Times @@ Flatten[ResourceFunction["HookLengths"][p]];
@@ -145,7 +145,7 @@ hookCount /@ OEIS`BulgarianSolitaireOrbit[{6, 4, 3, 1, 1}]
 (* {231660, 96525, 75075, 100100, 125125, 210210, 175175, 292864} *)
 ```
 
-and the last value is the staircase (A005118: 1, 2, 16, 768, 292864, 1100742656, … for k = 1, 2, …). `StandardYoungTableaux` lists them for small shapes, and agrees with the formula:
+and the last value is the staircase (A005118: 1, 2, 16, 768, 292864, 1100742656, … for $k = 1, 2, \dots$). `StandardYoungTableaux` lists them for small shapes, and agrees with the formula:
 
 ```wolfram
 ResourceFunction["StandardYoungTableaux"][{2, 1}]                  (* {{{1, 2}, {3}}, {{1, 3}, {2}}} *)
@@ -153,21 +153,21 @@ Length[ResourceFunction["StandardYoungTableaux"][{4, 3, 2, 1}]]   (* 768 *)
 Total[hookCount[#]^2 & /@ IntegerPartitions[8]]                    (* 40320 = 8! *)
 ```
 
-The last line is the Robinson–Schensted identity: the squares of the tableau counts over the partitions of n add up to n!.
+The last line is the Robinson–Schensted identity: the squares of the tableau counts over the partitions of $n$ add up to $n!$.
 
 ## How it works
 
 1. **The move.** `Sort[Append[DeleteCases[p - 1, 0], Length[p]], Greater]`.
 2. **Orbits.** The orbit is followed with an `Association` of seen partitions. The first repeat gives both the cycle and the distance (the position of the repeat).
-3. **Periodic partitions.** Draw the partition as checkers on a board with row i holding the i-th part, and let `diag[k]` be the cells with `i + j − 1 = k`. A move never carries a checker from `diag[k]` to `diag[k+1]`. Write `m(m+1)/2 ≤ n < (m+1)(m+2)/2` and `r = n − m(m+1)/2`. The partitions of n on a cycle are exactly those with `k` cells on `diag[k]` for `k ≤ m`, `r` cells on `diag[m+1]`, and none beyond (Toom, Theorem 2.1). `BulgarianSolitairePeriodicQ` counts the diagonals, without iterating.
-4. **Cycles.** Any choice of r of the m + 1 cells on `diag[m+1]` gives a periodic partition: row i has `m + 1 − i` cells on the smaller diagonals, plus one if its cell is chosen. `BulgarianSolitaireCycles` builds one partition per choice, iterates the move to get its cycle, rotates the cycle to start at its smallest partition, and removes duplicates. A move rotates `diag[m+1]`, so the cycles are the necklaces of m + 1 beads with r marked, and `BulgarianSolitaireCycleCount` evaluates Burnside's sum `(1/(m+1)) Σ_{d | gcd(m+1, r)} φ(d) C((m+1)/d, r/d)`. `BulgarianSolitaireCycles` visits `C(m+1, r)` choices, so use the count for large n.
-5. **Garden of Eden partitions.** `(λ₁, …, λ_t)` has a preimage for each distinct part `v ≥ t − 1`: add 1 to every other part and append `v − t + 1` ones. There is none exactly when `λ₁ − t ≤ −2`. Dyson's rank generating function sums to `Σ ge(n) qⁿ = (Σ p(n) qⁿ)(Σ_{j≥1} (−1)^(j+1) q^(3j(j+1)/2))`, which is the formula `BulgarianSolitaireGardenOfEdenCount` uses.
-6. **Levels.** `BulgarianSolitaireLevels[n]` groups the partitions by distance to the cycles. The periodic partitions come first; then each level is the preimages of the previous one that are not periodic. The preimage table is built once with `GroupBy[IntegerPartitions[n], step]`, so the cost is that of listing all p(n) partitions.
-7. **Quasi-infinite tree.** Eriksson and Jonsson fix the level d and let k → ∞. The generating function for the level sizes of the reversed tree with its loop at the staircase is `g(x) = (1 − x)/(1 − 3x + x²)`, with `g_d = F(2d+1)`. Without the loop, the number of partitions at distance d is `F(2d)` (A088305). The leaves have `ℓ(x) = (x³ − x⁴)/((1 − x − x²)(1 − 3x + x²))`, so `ℓ_d = (F(2d−2) − F(d−1))/2` (A094292 up to an initial zero). For `n = k(k+1)/2` the actual level sizes equal `F(2d)` for `d ≤ ⌊k/2⌋` (Theorem 5.1), and level `⌊k/2⌋ + 1` is short by 1 for odd k and by `1 + k/2` for even k.
-8. **Row-to-column moves.** In Hopkins' two-player game a move changes any row of the Ferrers diagram into a column. Removing row j lowers every column of height at least j by 1, and the removed cells form a new column whose height is the length of row j. Row 1 is the ordinary move. Starting from `{n}`, the first move is forced to `{n − 1, 1}`, and the second gives `{n − 2, 2}` or `{n − 2, 1, 1}`.
-9. **One cycle's basin and Pham's limit.** A cycle is a necklace of m + 1 beads, a bead being 1 (black, B) where a cell of diagonal m + 1 is filled; row i of the partition has `m + 1 − i` cells on the smaller diagonals plus its bead (Pham's difference labelling from the staircase, with 1 = B and 0 = W). `BulgarianSolitaireBasinLevelSizes` walks backward through the preimages from the cycle, so it visits only that cycle's basin, not all p(n) partitions. Pham (arXiv 2208.14496) studies the necklace P repeated k times: the level sizes of the basin converge as k grows to the coefficients of a rational function `H_P(x)`. For P = BW, `H_BW(x) = (x − 1)²(3x + 2)/(x³ − 3x² − x + 1) = 2 + x + 3x² + 7x³ + 15x⁴ + 33x⁵ + 71x⁶ + 155x⁷ + …` (Theorem 1.1; I checked it against the paper's text), and for a primitive P of length at least 3 the denominator has degree at most |P| and the numerator degree at most 2|P| (Theorem 1.2). She conjectures that the degree of the denominator is exactly |P|, and that `H_P` and `H_P*` have the same denominator, where P* is P read backwards with the colours swapped (Conjecture 1.1 of Harris–Nguyen, arXiv 2308.05321, who prove it for `BW^k` and `B(WB)^k`, the latter with `H_B(WB)^k = H_W(BW)^k`). In the data, the first levels of the basin of `P^k` agree with the series for about 2k terms (for example 13 of 14 for BWW with k = 6 and 12 for BWWW with k = 6), more than the k levels I first checked for BW (ℓ = 2 to 9, where level ℓ is the first that differs: ℓ = 8 gives 334 where the series has 335, the cycle has length 2, and the height is 2ℓ − 1).
+3. **Periodic partitions.** Draw the partition as checkers on a board with row $i$ holding the $i$-th part, and let $\mathrm{diag}_k$ be the cells with $i + j - 1 = k$. A move never carries a checker from $\mathrm{diag}_k$ to $\mathrm{diag}_{k+1}$. Write $m(m+1)/2 \le n < (m+1)(m+2)/2$ and $r = n - m(m+1)/2$. The partitions of $n$ on a cycle are exactly those with $k$ cells on $\mathrm{diag}_k$ for $k \le m$, $r$ cells on $\mathrm{diag}_{m+1}$, and none beyond (Toom, Theorem 2.1). `BulgarianSolitairePeriodicQ` counts the diagonals, without iterating.
+4. **Cycles.** Any choice of $r$ of the $m + 1$ cells on $\mathrm{diag}_{m+1}$ gives a periodic partition: row $i$ has $m + 1 - i$ cells on the smaller diagonals, plus one if its cell is chosen. `BulgarianSolitaireCycles` builds one partition per choice, iterates the move to get its cycle, rotates the cycle to start at its smallest partition, and removes duplicates. A move rotates $\mathrm{diag}_{m+1}$, so the cycles are the necklaces of $m + 1$ beads with $r$ marked, and `BulgarianSolitaireCycleCount` evaluates Burnside's sum $\frac{1}{m+1} \sum_{d \mid \gcd(m+1, r)} \varphi(d) \binom{(m+1)/d}{r/d}$. `BulgarianSolitaireCycles` visits $\binom{m+1}{r}$ choices, so use the count for large n.
+5. **Garden of Eden partitions.** $(\lambda_1, \dots, \lambda_t)$ has a preimage for each distinct part $v \ge t - 1$: add 1 to every other part and append $v - t + 1$ ones. There is none exactly when $\lambda_1 - t \le -2$. Dyson's rank generating function sums to $\sum ge(n)\, q^n = \left(\sum p(n)\, q^n\right) \left(\sum_{j \ge 1} (-1)^{j+1} q^{3j(j+1)/2}\right)$, which is the formula `BulgarianSolitaireGardenOfEdenCount` uses.
+6. **Levels.** `BulgarianSolitaireLevels[n]` groups the partitions by distance to the cycles. The periodic partitions come first; then each level is the preimages of the previous one that are not periodic. The preimage table is built once with `GroupBy[IntegerPartitions[n], step]`, so the cost is that of listing all $p(n)$ partitions.
+7. **Quasi-infinite tree.** Eriksson and Jonsson fix the level $d$ and let $k \to \infty$. The generating function for the level sizes of the reversed tree with its loop at the staircase is $g(x) = \dfrac{1 - x}{1 - 3x + x^2}$, with $g_d = F(2d+1)$. Without the loop, the number of partitions at distance $d$ is $F(2d)$ (A088305). The leaves have $\ell(x) = \dfrac{x^3 - x^4}{(1 - x - x^2)(1 - 3x + x^2)}$, so $\ell_d = (F(2d-2) - F(d-1))/2$ (A094292 up to an initial zero). For $n = k(k+1)/2$ the actual level sizes equal $F(2d)$ for $d \le \lfloor k/2 \rfloor$ (Theorem 5.1), and level $\lfloor k/2 \rfloor + 1$ is short by 1 for odd $k$ and by $1 + k/2$ for even $k$.
+8. **Row-to-column moves.** In Hopkins' two-player game a move changes any row of the Ferrers diagram into a column. Removing row $j$ lowers every column of height at least $j$ by 1, and the removed cells form a new column whose height is the length of row $j$. Row 1 is the ordinary move. Starting from `{n}`, the first move is forced to `{n − 1, 1}`, and the second gives `{n − 2, 2}` or `{n − 2, 1, 1}`.
+9. **One cycle's basin and Pham's limit.** A cycle is a necklace of $m + 1$ beads, a bead being 1 (black, B) where a cell of diagonal $m + 1$ is filled; row $i$ of the partition has $m + 1 - i$ cells on the smaller diagonals plus its bead (Pham's difference labelling from the staircase, with 1 = B and 0 = W). `BulgarianSolitaireBasinLevelSizes` walks backward through the preimages from the cycle, so it visits only that cycle's basin, not all $p(n)$ partitions. Pham (arXiv 2208.14496) studies the necklace $P$ repeated $k$ times: the level sizes of the basin converge as $k$ grows to the coefficients of a rational function $H_P(x)$. For $P = \mathrm{BW}$, $H_{\mathrm{BW}}(x) = \dfrac{(x - 1)^2 (3x + 2)}{x^3 - 3x^2 - x + 1} = 2 + x + 3x^2 + 7x^3 + 15x^4 + 33x^5 + 71x^6 + 155x^7 + \cdots$ (Theorem 1.1; I checked it against the paper's text), and for a primitive $P$ of length at least 3 the denominator has degree at most $|P|$ and the numerator degree at most $2|P|$ (Theorem 1.2). She conjectures that the degree of the denominator is exactly $|P|$, and that $H_P$ and $H_{P^*}$ have the same denominator, where $P^*$ is $P$ read backwards with the colours swapped (Conjecture 1.1 of Harris–Nguyen, arXiv 2308.05321, who prove it for $\mathrm{BW}^k$ and $\mathrm{B(WB)}^k$, the latter with $H_{\mathrm{B(WB)}^k} = H_{\mathrm{W(BW)}^k}$). In the data, the first levels of the basin of $P^k$ agree with the series for about $2k$ terms (for example 13 of 14 for BWW with $k = 6$ and 12 for BWWW with $k = 6$), more than the $k$ levels I first checked for BW ($\ell = 2$ to 9, where level $\ell$ is the first that differs: $\ell = 8$ gives 334 where the series has 335, the cycle has length 2, and the height is $2\ell - 1$).
 
-Pham also conjectures that `|O_(P^k)| = c_P^(k−1) |O_P|` with `c_P = c_P*` (for BWW and BBW, `c = 5`); that is a statement about orbit sizes and is not checked here.
+Pham also conjectures that $|O_{P^k}| = c_P^{k-1} |O_P|$ with $c_P = c_{P^*}$ (for BWW and BBW, $c = 5$); that is a statement about orbit sizes and is not checked here.
 
 ## Checks
 
@@ -179,14 +179,14 @@ TestReport["test/wolfram/BulgarianSolitaire.wlt"]
 
 They check:
 
-- The examples in the papers: the 15-card orbit, the 8-card cycles, three cycles for 17 cards, the rank −3 example, Gardner's three Garden of Eden partitions for n = 6, and the preimages of `(6, 5)`.
-- Igusa's partition `(k−1, k−1, k−2, …, 2, 1, 1)` being k(k−1) moves from the staircase, for k = 3 to 8.
-- Toom's criterion against iterating the move, and `BulgarianSolitaireCycles` against the cycles reached from every partition of n for n ≤ 18.
-- `BulgarianSolitaireCycleCount` against `Length[BulgarianSolitaireCycles[n]]` for n ≤ 40.
-- `BulgarianSolitaireGardenOfEdenCount` against a direct count for n ≤ 40, and `BulgarianSolitairePreimages` against a brute-force search for n ≤ 14.
-- The level sizes for 6 and 10 cards (the latter read off Figure 2 of Eriksson and Jonsson, with the 42 vertices and 14 leaves accounted for), the tree height k(k−1) for k = 2 to 7, and Theorem 5.1 for k = 3 to 8, including the deficit at level `⌊k/2⌋ + 1`.
-- The generating functions for `F(2d)` and the leaf counts against the closed forms.
-- `BulgarianSolitaireMaxDistance` against the largest `BulgarianSolitaireDistance` for n ≤ 14 and against k(k−1) for k = 2 to 7, the cycle lengths for 8, 12, 17 and 20, the components of the cycles partitioning the partitions of n for n ≤ 14, and the reversed tree for 10 cards (42 vertices, 41 edges, a tree).
+- The examples in the papers: the 15-card orbit, the 8-card cycles, three cycles for 17 cards, the rank −3 example, Gardner's three Garden of Eden partitions for $n = 6$, and the preimages of `(6, 5)`.
+- Igusa's partition $(k-1, k-1, k-2, \dots, 2, 1, 1)$ being $k(k-1)$ moves from the staircase, for $k = 3$ to 8.
+- Toom's criterion against iterating the move, and `BulgarianSolitaireCycles` against the cycles reached from every partition of $n$ for $n \le 18$.
+- `BulgarianSolitaireCycleCount` against `Length[BulgarianSolitaireCycles[n]]` for $n \le 40$.
+- `BulgarianSolitaireGardenOfEdenCount` against a direct count for $n \le 40$, and `BulgarianSolitairePreimages` against a brute-force search for $n \le 14$.
+- The level sizes for 6 and 10 cards (the latter read off Figure 2 of Eriksson and Jonsson, with the 42 vertices and 14 leaves accounted for), the tree height $k(k-1)$ for $k = 2$ to 7, and Theorem 5.1 for $k = 3$ to 8, including the deficit at level $\lfloor k/2 \rfloor + 1$.
+- The generating functions for $F(2d)$ and the leaf counts against the closed forms.
+- `BulgarianSolitaireMaxDistance` against the largest `BulgarianSolitaireDistance` for $n \le 14$ and against $k(k-1)$ for $k = 2$ to 7, the cycle lengths for 8, 12, 17 and 20, the components of the cycles partitioning the partitions of $n$ for $n \le 14$, and the reversed tree for 10 cards (42 vertices, 41 edges, a tree).
 
 ### Checking Pham's conjecture on more necklaces
 
