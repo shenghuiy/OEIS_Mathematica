@@ -1,4 +1,4 @@
-# Mathematical Explorations
+# Discrete Mathematical Explorations
 
 [![Java tests](https://github.com/shenghuiy/OEIS_Mathematica/actions/workflows/maven.yml/badge.svg?branch=main)](https://github.com/shenghuiy/OEIS_Mathematica/actions/workflows/maven.yml)
 [![Python tests](https://github.com/shenghuiy/OEIS_Mathematica/actions/workflows/python.yml/badge.svg?branch=main)](https://github.com/shenghuiy/OEIS_Mathematica/actions/workflows/python.yml)
