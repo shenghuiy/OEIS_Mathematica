@@ -5,8 +5,8 @@
 BeginPackage["OEIS`"];
 
 A101198::usage = "A101198[n] gives the number of partitions of n with rank 1, where the rank of a partition is its largest part minus its number of parts.";
-PartitionRankCount::usage = "PartitionRankCount[m, n] gives N(m, n), the number of partitions of n with rank m: for n <= 1000 as a sum of about Sqrt[2n/3] differences of partition numbers p(n - k(3k-1)/2 - |m| k) - p(n - k(3k+1)/2 - |m| k), and above that from the recurrence used by PartitionRankCountList.";
-PartitionRankCountList::usage = "PartitionRankCountList[m, nmax] gives {N(m, 1), ..., N(m, nmax)}, the numbers of partitions of 1, ..., nmax with rank m, from a single pass of a recurrence.";
+PartitionRankCount::usage = "PartitionRankCount[m, n] gives N(m, n), the number of partitions of n with rank m: as a sum of about Sqrt[2n/3] differences of partition numbers p(n - k(3k-1)/2 - |m| k) - p(n - k(3k+1)/2 - |m| k).";
+PartitionRankCountList::usage = "PartitionRankCountList[m, nmax] gives {N(m, 1), ..., N(m, nmax)}, the numbers of partitions of 1, ..., nmax with rank m.";
 
 Begin["`Private`"];
 
@@ -24,53 +24,21 @@ Begin["`Private`"];
 
 
 (* ::Text:: *)
-(*Expanding 1/Prod(1 - x^r) = Sum p(j) x^j and reading off the coefficient of x^n gives N(m, n) = Sum_{k>=1} (-1)^(k-1) (p(n - k(3k-1)/2 - m k) - p(n - k(3k+1)/2 - m k)), with p(j) = 0 for j < 0 (PartitionsP gives 0 there). The sum stops once k(3k-1)/2 + m k > n, after at most about Sqrt[2n/3] terms. For m = 1 the two offsets are k(3k+1)/2 and 3k(k+1)/2.*)
+(*Expanding 1/Prod(1 - x^r) = Sum p(j) x^j and reading off the coefficient of x^n gives N(m, n) = Sum_{k>=1} (-1)^(k-1) (p(n - k(3k-1)/2 - m k) - p(n - k(3k+1)/2 - m k)), with p(j) = 0 for j < 0 (PartitionsP gives 0 there). The sum stops once k(3k-1)/2 + m k > n, so k <= (1 + Sqrt[1 + 24 n])/6 is enough; for m = 1 the two offsets are k(3k+1)/2 and 3k(k+1)/2.*)
 
 
-(* ::Text:: *)
-(*In a fresh kernel the sum takes about 2 ms for n = 1000, but PartitionsP gets slow above that (0.35 s for n = 1500, 2.8 s for n = 10^4), while the whole list of the next subsection takes 0.04 s and 0.35 s. So for n > rankSumCutoff = 1000 one term is the last entry of that list.*)
+PartitionRankCount[m_Integer, n_Integer?Positive] :=
+  Sum[(-1)^(k - 1) (PartitionsP[n - k (3 k - 1)/2 - Abs[m] k] - PartitionsP[n - k (3 k + 1)/2 - Abs[m] k]),
+    {k, 1, Floor[(Sqrt[24 n + 1] + 1)/6]}]
 
-
-rankSumCutoff = 1000;
-
-rankCountSum[m_, n_] := Module[{k = 1, s = 0, e},
-  While[(e = k (3 k - 1)/2 + m k) <= n,
-    s += (-1)^(k - 1) (PartitionsP[n - e] - PartitionsP[n - e - k]);
-    k++];
-  s]
-
-rankCount[m_, n_] := If[n <= rankSumCutoff, rankCountSum[m, n], Last[rankCountList[m, n]]]
-
-PartitionRankCount[m_Integer, n_Integer?Positive] := rankCount[Abs[m], n]
-
-A101198[n_Integer?Positive] := rankCount[1, n]
+A101198[n_Integer?Positive] := PartitionRankCount[1, n]
 
 
 (* ::Subsection:: *)
 (*Many terms*)
 
 
-(* ::Text:: *)
-(*A new PartitionsP value near n = 10^4 takes about 0.02 s, so a table is built instead from a recurrence. Writing c(n) for the coefficient of x^n in the numerator of (2.12), the identity N * Prod(1 - x^r) = numerator with Euler's pentagonal series Prod(1 - x^r) = 1 + Sum_{k>=1} (-1)^k (x^(k(3k-1)/2) + x^(k(3k+1)/2)) gives N(m, n) = c(n) + Sum_{k>=1} (-1)^(k-1) (N(m, n - k(3k-1)/2) + N(m, n - k(3k+1)/2)), with N(m, j) = 0 for j <= 0. Only the k with k(3k-1)/2 <= nmax matter, that is k <= (1 + Sqrt[1 + 24 nmax])/6. The entry for n = 0 is 0 and Rest drops it.*)
-
-
-rankCountList[m_, nmax_] := Module[{kmax = Floor[(1 + Sqrt[1 + 24 nmax])/6], offs, sgns, num, a, c = 0, j},
-  offs = Flatten[Table[{k (3 k - 1)/2, k (3 k + 1)/2}, {k, 1, kmax}]];
-  sgns = Flatten[Table[{(-1)^(k - 1), (-1)^(k - 1)}, {k, 1, kmax}]];
-  num = ConstantArray[0, nmax + 1];
-  Do[
-    j = k (3 k - 1)/2 + m k;
-    If[j <= nmax, num[[j + 1]] += (-1)^(k - 1)];
-    If[j + k <= nmax, num[[j + k + 1]] -= (-1)^(k - 1)],
-    {k, 1, kmax}];
-  a = num;
-  Do[
-    While[c < Length[offs] && offs[[c + 1]] <= n, c++];
-    a[[n + 1]] += Take[sgns, c] . a[[n + 1 - Take[offs, c]]],
-    {n, 1, nmax}];
-  Rest[a]]
-
-PartitionRankCountList[m_Integer, nmax_Integer?Positive] := rankCountList[Abs[m], nmax]
+PartitionRankCountList[m_Integer, nmax_Integer?Positive] := Table[PartitionRankCount[m, n], {n, nmax}]
 
 
 (* ::Subsection:: *)
