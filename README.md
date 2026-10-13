@@ -47,6 +47,8 @@ Functions published in the Wolfram Function Repository, linked directly since th
 
 ### OEIS sequences
 
+I have contributed to 37 OEIS entries (see my [edit history](https://oeis.org/history?user=Shenghui%20Yang)): A003586, A003785, A028931, A059204, A062023, A091960, A101198, A101200, A123975, A126859, A126862, A157196, A262599, A306934, A344009, A357702, A378674, A382454, A383732, A383976, A384114, A384490, A384637, A384677, A391562, A391954, A392206, A392208, A392719, A394309, A397064, A397210, A397660, A397794, A397851, A398006 and A399539. The ones with code here:
+
 - [A316667](docs/A316667.md): `src/wolfram/A316667.wl`, the trapped knight walk on the square-spiral chessboard.
 - [A399539](docs/A399539.md): `src/wolfram/A399539.wl`, a compiled segmented sieve for numbers $k$ with $\psi(k) - \varphi(k) = d(k)^4$, with timings and the checks run in Mathematica.
 - [A157196](docs/A157196.md): `src/wolfram/A157196.wl`, a string construction for the self-describing sequence of 1s and 2s, with the checks run in Mathematica.
