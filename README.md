@@ -55,6 +55,7 @@ I have contributed to 37 OEIS entries (see my [edit history](https://oeis.org/hi
 - [A003785](docs/A003785.md): `src/wolfram/A003785.wl`, a Mathematica translation of the OEIS PARI program built from eta-function products.
 - [A101198](docs/A101198.md): `src/wolfram/A101198.wl`, the number of partitions of n with rank 1, and with any rank m (A047993, A101199, A101200, A363213, A363214), from Dyson's rank generating function as proved by Atkin and Swinnerton-Dyer.
 - [A101199](docs/A101199.md), [A101200](docs/A101200.md), [A363213](docs/A363213.md) and [A363214](docs/A363214.md): the numbers of partitions of n with rank 2, 3, 4 and 5, computed by `PartitionRankCount` from the A101198 package, with the formula for each rank.
+- [A064174](docs/A064174.md): `src/wolfram/A064174.wl`, the number of partitions of n with nonnegative rank, by Jovovic's sum of partition numbers and by a recurrence in the sequence itself, with its asymptotic. Not yet one of the contributed entries above: the recurrence and the asymptotic are not in the OEIS entry.
 - [A123975](https://oeis.org/A123975): the number of Garden of Eden partitions of $n$ in Bulgarian solitaire, computed by [`BulgarianSolitaireGardenOfEdenCount`](src/wolfram/BulgarianSolitaire.wl#L129) from the Hopkins–Sellers formula $p(n-3) - p(n-9) + p(n-18) - \cdots$; see the [Bulgarian solitaire](docs/BulgarianSolitaire.md) page.
 
 Tests for the Java code are described in [`test/java/README.md`](test/java/README.md), and tests for the Wolfram code in [`test/wolfram/README.md`](test/wolfram/README.md).
