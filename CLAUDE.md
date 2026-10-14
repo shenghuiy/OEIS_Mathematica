@@ -2,20 +2,28 @@
 
 ## Layout
 
-Independent code bases share the repo: Java (the only one with a build), Wolfram Language packages, and a stdlib-only Python port.
+Independent code bases share the repo: Java (the only one with a build), Wolfram Language packages, and a stdlib-only Python port. The Java and Python tests run in CI.
 
 - `src/java/CarrylessArithmetic.java`: carry-less ("dismal") arithmetic on decimal strings, a port of David Applegate's 2003 C program. Operands and results are `String`s; divisor/divide search uses a `ToIntFunction<String>` callback (a negative return stops the search). Also callable from Mathematica via J/Link.
-- `src/wolfram/*.wl`: one package per OEIS sequence or topic. Each is `BeginPackage["OEIS`"]` with public symbols in the shared `OEIS`` context and helpers in `` `Private` ``, written as Mathematica notebook-style source (`(* ::Subsection:: *)` markers, so keep those cell markers intact when editing).
-- `src/python/`: ports of Wolfram packages; `test/python/` holds their `unittest` tests.
-- `docs/`: one Markdown page per source file, indexed from `README.md`. Update the page when changing its `.wl` or the Java class.
-- `test/wolfram/`: one `.wlt` per `.wl`; not part of Maven or CI. How to run: `test/wolfram/README.md`.
-- `test/java/`: `expected/` is reference output from the original C program (regenerate per `test/java/README.md`); `results/` is recorded surefire output.
+- `src/wolfram/*.wl`: one package per OEIS sequence or topic. Each is `BeginPackage["OEIS`"]` with public symbols in the shared `OEIS`` context and helpers in `` `Private` ``, written as Mathematica notebook-style source (`(* ::Subsection:: *)` markers, so keep those cell markers intact when editing). Every package shares `OEIS`` and `OEIS`Private``, so a name leaked from one breaks the others' tests with `::shdw`; load the `wolfram-package` skill (`.claude/skills/wolfram-package`) before adding or editing a package or `.wlt` file. The partition-rank sequences (A101199, A101200, A363213, A363214) have doc pages but no package: they are `PartitionRankCount[m, n]` from `A101198.wl`.
+- `src/python/`: `bulgarian_solitaire.py` ports `BulgarianSolitaire.wl`, with `unittest` tests in `test/python/`; `pham_conjecture.py` is a standalone script (no tests), usage in its docstring.
+- `docs/`: one Markdown page per source file. Update the page when changing its `.wl` or the Java class. A new package goes in three indexes: `README.md` (the "ones with code here" list; the rest of that file is the user's own OEIS contributions), `docs/README.md`, and the table in `test/wolfram/README.md` (with its test count).
+- `test/wolfram/`: one `.wlt` (`VerificationTest` cases) per `.wl`.
+- `test/java/`: JUnit 5 tests. `expected/` is reference output from the original C program (regenerate per `test/java/README.md`); `results/` is recorded surefire output.
 
 ## Commands
 
-Use plain `mvn` (as CI does). `mvn3` is MacPorts' name for Maven on the Mac only. `mvn test` runs only the Java tests; Python has its own runner (see `.github/workflows/python.yml`).
+Use plain `mvn` (as CI does). `mvn3` is MacPorts' name for Maven on the Mac only (`/opt/local/bin/mvn3`).
+
+```bash
+mvn test                                             # Java tests (CI: Java 11 and 21)
+mvn test -Dtest=CarrylessArithmeticTest#methodName   # single test
+python -m unittest discover -s test/python -v        # Python tests (CI: .github/workflows/python.yml)
+```
 
 To update the recorded results after `mvn test`, copy `CarrylessArithmeticTest.txt` and `TEST-CarrylessArithmeticTest.xml` from `target/surefire-reports/` into `test/java/results/`.
+
+The Wolfram tests are not part of Maven or CI: run `TestReport /@ FileNames["*.wlt", "test/wolfram"]` in a kernel (see `test/wolfram/README.md`). On the user's Mac, `wolframscript` is not on `PATH`; use `/Applications/Wolfram.app/Contents/MacOS/wolframscript -code '...'` from the repo root. The Wolfram MCP evaluator prints messages instead of recording them, so tests that expect messages fail there; use `wolframscript` for a real run.
 
 ## Notes
 

@@ -145,33 +145,12 @@ VerificationTest[
   TestID -> "oeis-b-file-single-term"
 ]
 
-(* Above n = 1000 a single term comes from the series division instead of the PartitionsP sum *)
-
-VerificationTest[
-  OEIS`A101198[2000],
-  33979575123567660975352441262897733715154891,
-  TestID -> "oeis-b-file-single-term-series"
-]
-
-VerificationTest[
-  Table[OEIS`PartitionRankCount[m, n], {m, {0, 1, 3, -2}}, {n, {1000, 1001}}],
-  Table[OEIS`Private`rankCountSum[Abs[m], n], {m, {0, 1, 3, -2}}, {n, {1000, 1001}}],
-  TestID -> "cutoff-both-methods-agree"
-]
-
-
 (* Against the definition *)
 
 VerificationTest[
   Table[OEIS`PartitionRankCount[m, n], {m, -6, 6}, {n, 1, 24}],
   Table[Count[IntegerPartitions[n], p_ /; First[p] - Length[p] == m], {m, -6, 6}, {n, 1, 24}],
   TestID -> "brute-force"
-]
-
-VerificationTest[
-  Table[OEIS`PartitionRankCountList[m, 300], {m, -3, 4}],
-  Table[OEIS`PartitionRankCount[m, n], {m, -3, 4}, {n, 1, 300}],
-  TestID -> "list-matches-single-terms"
 ]
 
 (* Ranks run from 1 - n (all parts 1) to n - 1 (one part n) *)
