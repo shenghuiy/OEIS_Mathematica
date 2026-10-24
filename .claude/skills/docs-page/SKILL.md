@@ -33,11 +33,10 @@ GitHub typesets `$...$` and `$$...$$` with MathJax, but two things happen first.
 
    `--fix` rewrites each escape in the table above to its named macro, in place; without it the script only reports. It also reports refused macros and other escapes (`\;`, `\:`), which it cannot fix: replace those by hand with a macro spelled in letters, and confirm it renders. Done when a run without `--fix` prints nothing and exits 0. Read the diff of any file it fixed.
 
-2. After pushing, open each changed page on the branch, `https://github.com/shenghuiy/OEIS_Mathematica/blob/<branch>/docs/<page>.md`, in the built-in browser. Each formula is a `math-renderer` element whose text is the TeX MathJax received; this lists them, with a flag on any that shows an error:
+2. After pushing, open each changed page on the branch, `https://github.com/shenghuiy/OEIS_Mathematica/blob/<branch>/docs/<page>.md`, in the built-in browser. Each formula is a `math-renderer` element whose text is the TeX MathJax will receive, after Markdown has had its turn:
 
    ```js
-   [...document.querySelectorAll('article.markdown-body math-renderer')]
-     .map(e => (/not allowed|error/i.test(e.innerText) ? 'ERROR ' : '') + e.textContent.trim().split('\n')[0])
+   [...document.querySelectorAll('article.markdown-body math-renderer')].map(e => e.textContent.trim())
    ```
 
-   Done when no entry is flagged and every entry has the same backslashes as the `$...$` in the source.
+   Done when every entry has the same backslashes as the `$...$` in the source. The built-in browser shows these formulas as raw TeX and never typesets them, so it cannot show a refused macro; when a page uses a macro not yet seen rendering on GitHub, ask the user to look at the page in their own browser.
