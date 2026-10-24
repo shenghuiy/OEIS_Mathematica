@@ -19,7 +19,7 @@ GitHub typesets `$...$` and `$$...$$` with MathJax, but two things happen first.
    | `(p + 1)\, p` | `(p + 1), p` | a literal comma | `(p + 1)\thinspace p` |
    | `p\!\left(n\right)` | `p!\left(n\right)` | p!(n), a factorial | `p\negthinspace\left(n\right)` |
 
-   Macros spelled with letters (`\lbrace`, `\thinspace`, `\sum`, `\dots`) are not Markdown escapes and pass through untouched.
+   Macros spelled with letters (`\lbrace`, `\thinspace`, `\sum`, `\dots`) are not Markdown escapes and pass through untouched. Everything in the right-hand column, and `\mathrm`, has been seen typesetting correctly on GitHub.
 
 2. **Some macros are refused.** GitHub replaces the formula with "The following macros are not allowed: operatorname". For an operator name write `\mathrm{lcm}`; the operators MathJax has built in (`\gcd`, `\max`, `\log`, `\sum`) work as they are.
 
