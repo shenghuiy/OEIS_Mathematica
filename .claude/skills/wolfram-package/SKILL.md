@@ -31,4 +31,4 @@ The case that happened: `A399539.wl` had `A399539[n_Integer?Positive] := isokSeg
 
 ## Done when
 
-In a fresh kernel, `Get` the package and check that `Names["OEIS`*"]` lists exactly the names that have a `::usage` line. Then run the whole suite in one kernel; a `::shdw` message anywhere means a package is leaking.
+In a fresh kernel, `Get` the package and check that `Names["OEIS`*"]` lists exactly the names that have a `::usage` line. Then run the whole suite in one kernel; a `::shdw` message anywhere means a package is leaking. The package's page in `docs/` is done when it passes the checks in the `docs-page` skill.
