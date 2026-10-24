@@ -1,6 +1,6 @@
 ---
 name: wolfram-package
-description: Context rules for the Wolfram packages in src/wolfram/*.wl and their tests in test/wolfram/*.wlt — what goes before Begin["`Private`"], how symbols leak into the shared OEIS` context, and the ::shdw failures that follow. Use when adding or editing a package or a .wlt file, or when a test fails on a ::shdw message.
+description: Context rules for the Wolfram packages in src/wolfram/*.wl and their tests in test/wolfram/*.wlt — what goes before Begin["`Private`"], how symbols leak into the shared OEIS` context, the ::shdw failures that follow, and where to run Wolfram code (local kernel first, cloud only without FunctionCompile). Use when adding or editing a package or a .wlt file, running Wolfram code, or when a test fails on a ::shdw message.
 ---
 
 # Wolfram package contexts
@@ -28,6 +28,13 @@ The case that happened: `A399539.wl` had `A399539[n_Integer?Positive] := isokSeg
 
 - Call public functions by full name (`OEIS`A399539[...]`) and private helpers as `OEIS`Private`helper[...]`. Each fully qualified name is created in exactly that context, so a misspelled or moved helper shows up as a failing test instead of a new public symbol.
 - Ordinary short names (`n`, `k`, `p`) are fine in tests: they land in `Global``, which only causes trouble when a package leaks the same name into `OEIS``.
+
+## Running Wolfram code
+
+Run on a local kernel whenever one is available. That means `wolframscript` (the paths are in `CLAUDE.md`) or the Wolfram MCP evaluator and `TestReport` tools, which also start local kernels.
+
+- With `wolframscript -file`, `FunctionCompile` draws a progress box of `|` and `-` lines on every compile. Pipe through `grep -v '^ *[|-]'` to see only the real output.
+- Fall back to the Wolfram Cloud (`wolframscript -cloud -code '...'`, after a one-time `wolframscript -authenticate`) only when no local kernel can start, for example when no license is free. Use it only for code that never reaches `FunctionCompile`, directly or through a package it loads (`grep FunctionCompile src/wolfram/*.wl` lists those packages). Compiled code waits for a local kernel.
 
 ## Done when
 
