@@ -4,10 +4,10 @@
 
 BeginPackage["OEIS`"];
 
-A401118::usage = "A401118[n] gives the size of the largest subset of {1, ..., n} that contains no LCM triangle: no three elements i, j, k with lcm(i, j) = lcm(j, k) = lcm(k, i).";
+A401118Incremental::usage = "A401118Incremental[n] gives the size of the largest subset of {1, ..., n} that contains no LCM triangle: no three elements i, j, k with lcm(i, j) = lcm(j, k) = lcm(k, i).";
 A401118List::usage = "A401118List[nmax] gives {a(1), ..., a(nmax)} for A401118.";
 LCMTriangles::usage = "LCMTriangles[n] gives every LCM triangle {i, j, k} with i < j < k <= n and lcm(i, j) = lcm(j, k) = lcm(k, i), sorted by k and then i.";
-LCMTriangleFreeSubset::usage = "LCMTriangleFreeSubset[n] gives a largest subset of {1, ..., n} with no LCM triangle, of size A401118[n].";
+LCMTriangleFreeSubset::usage = "LCMTriangleFreeSubset[n] gives a largest subset of {1, ..., n} with no LCM triangle, of size A401118Incremental[n].";
 
 Begin["`Private`"];
 
@@ -105,7 +105,7 @@ LCMTriangles[n_Integer?Positive] := lcmTrianglesTop[1, n]
 
 A401118List[nmax_Integer?Positive] := First[a401118Run[nmax, a401118DefaultSolver[A401118List]]]
 
-A401118[n_Integer?Positive] := Last[A401118List[n]]
+A401118Incremental[n_Integer?Positive] := Last[A401118List[n]]
 
 LCMTriangleFreeSubset[n_Integer?Positive] := Last[a401118Run[n, a401118DefaultSolver[LCMTriangleFreeSubset]]]
 
@@ -118,7 +118,7 @@ Scan[
   Function[f,
     MessageName[f, "posint"] = "`1` is not a positive integer.";
     f[n_] /; ! (IntegerQ[n] && n > 0) := (Message[f::posint, n]; $Failed)],
-  {A401118, A401118List, LCMTriangles, LCMTriangleFreeSubset}]
+  {A401118Incremental, A401118List, LCMTriangles, LCMTriangleFreeSubset}]
 
 
 End[];

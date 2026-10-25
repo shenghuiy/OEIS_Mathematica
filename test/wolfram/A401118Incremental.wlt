@@ -1,7 +1,7 @@
-(* Tests for src/wolfram/A401118.wl *)
+(* Tests for src/wolfram/A401118Incremental.wl *)
 
 VerificationTest[
-  Get[FileNameJoin[{DirectoryName[$TestFileName], "..", "..", "src", "wolfram", "A401118.wl"}]];
+  Get[FileNameJoin[{DirectoryName[$TestFileName], "..", "..", "src", "wolfram", "A401118Incremental.wl"}]];
   True,
   True,
   TestID -> "load-package"
@@ -16,20 +16,20 @@ VerificationTest[
   TestID -> "only-documented-public"
 ]
 
-(* Loading A401118.wl alone (or again) gives the LinearOptimization solver; A401118_SCIP.wl's Method option is not defined by it *)
+(* Loading A401118Incremental.wl alone (or again) gives the LinearOptimization solver; A401118_SCIP.wl's Method option is not defined by it *)
 
 VerificationTest[
-  OEIS`Private`a401118DefaultSolver[OEIS`A401118] === OEIS`Private`lcmTriangleMax,
+  OEIS`Private`a401118DefaultSolver[OEIS`A401118Incremental] === OEIS`Private`lcmTriangleMax,
   True,
   TestID -> "default-solver-linearoptimization"
 ]
 
 
-(* Examples from docs/A401118.md *)
+(* Examples from docs/A401118Incremental.md *)
 
 VerificationTest[OEIS`LCMTriangles[12], {{2, 3, 6}, {2, 5, 10}, {3, 4, 12}, {4, 6, 12}}, TestID -> "example-triangles-12"]
 
-VerificationTest[{OEIS`A401118[6], OEIS`A401118[12]}, {5, 10}, TestID -> "example-a6-a12"]
+VerificationTest[{OEIS`A401118Incremental[6], OEIS`A401118Incremental[12]}, {5, 10}, TestID -> "example-a6-a12"]
 
 VerificationTest[
   Module[{s = OEIS`LCMTriangleFreeSubset[12]},
@@ -105,14 +105,14 @@ VerificationTest[
   TestID -> "formulas"
 ]
 
-VerificationTest[OEIS`A401118[100], OEIS`A401118List[100][[100]], TestID -> "single-term-vs-list"]
+VerificationTest[OEIS`A401118Incremental[100], OEIS`A401118List[100][[100]], TestID -> "single-term-vs-list"]
 
 
 
 
 (* Invalid arguments *)
 
-VerificationTest[OEIS`A401118[0], $Failed, {OEIS`A401118::posint}, TestID -> "message-a-zero"]
+VerificationTest[OEIS`A401118Incremental[0], $Failed, {OEIS`A401118Incremental::posint}, TestID -> "message-a-zero"]
 VerificationTest[OEIS`A401118List[2.5], $Failed, {OEIS`A401118List::posint}, TestID -> "message-list-real"]
 VerificationTest[OEIS`LCMTriangles[-3], $Failed, {OEIS`LCMTriangles::posint}, TestID -> "message-triangles-negative"]
 VerificationTest[OEIS`LCMTriangleFreeSubset["x"], $Failed, {OEIS`LCMTriangleFreeSubset::posint}, TestID -> "message-subset-string"]

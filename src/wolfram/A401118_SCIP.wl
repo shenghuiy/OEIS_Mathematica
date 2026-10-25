@@ -1,14 +1,14 @@
 (* ::Package:: *)
 
-(* SCIP for A401118.wl: a Method option on A401118, A401118List and LCMTriangleFreeSubset that solves the package's 0-1 programs with SCIP (src/c/a401118_scip, through ForeignFunctionLoad) or with LinearOptimization. Loads A401118.wl first when it is not loaded yet. *)
+(* SCIP for A401118Incremental.wl: a Method option on A401118Incremental, A401118List and LCMTriangleFreeSubset that solves the package's 0-1 programs with SCIP (src/c/a401118_scip, through ForeignFunctionLoad) or with LinearOptimization. Loads A401118Incremental.wl first when it is not loaded yet. *)
 
-If[DownValues[OEIS`Private`a401118Run] === {}, Get[FileNameJoin[{DirectoryName[$InputFileName], "A401118.wl"}]]];
+If[DownValues[OEIS`Private`a401118Run] === {}, Get[FileNameJoin[{DirectoryName[$InputFileName], "A401118Incremental.wl"}]]];
 
 BeginPackage["OEIS`"];
 
-A401118::usage = "A401118[n] gives the size of the largest subset of {1, ..., n} that contains no LCM triangle: no three elements i, j, k with lcm(i, j) = lcm(j, k) = lcm(k, i). The option Method -> Automatic, \"SCIP\" or \"LinearOptimization\" picks the integer solver; Automatic uses SCIP when its library is found.";
+A401118Incremental::usage = "A401118Incremental[n] gives the size of the largest subset of {1, ..., n} that contains no LCM triangle: no three elements i, j, k with lcm(i, j) = lcm(j, k) = lcm(k, i). The option Method -> Automatic, \"SCIP\" or \"LinearOptimization\" picks the integer solver; Automatic uses SCIP when its library is found.";
 A401118List::usage = "A401118List[nmax] gives {a(1), ..., a(nmax)} for A401118. It takes the same Method option as A401118.";
-LCMTriangleFreeSubset::usage = "LCMTriangleFreeSubset[n] gives a largest subset of {1, ..., n} with no LCM triangle, of size A401118[n]. It takes the same Method option as A401118.";
+LCMTriangleFreeSubset::usage = "LCMTriangleFreeSubset[n] gives a largest subset of {1, ..., n} with no LCM triangle, of size A401118Incremental[n]. It takes the same Method option as A401118.";
 
 Begin["`Private`"];
 
@@ -23,7 +23,7 @@ a401118SCIPPackageDirectory = DirectoryName[$InputFileName];
 
 
 (* ::Text:: *)
-(*src/c/a401118_scip/a401118_scip.c solves the same 0-1 program as lcmTriangleMax in A401118.wl, with SCIP. Its CMake build puts a401118_scip.dll (.so, .dylib) in src/c/a401118_scip/lib, together with SCIP's own DLLs on Windows; the environment variable A401118_SCIP_LIB can name another directory. Windows resolves a DLL's dependencies on PATH rather than next to it, so LibraryLoad loads SoPlex and SCIP from that directory first. The library is looked for once per session; a failed lookup is remembered too.*)
+(*src/c/a401118_scip/a401118_scip.c solves the same 0-1 program as lcmTriangleMax in A401118Incremental.wl, with SCIP. Its CMake build puts a401118_scip.dll (.so, .dylib) in src/c/a401118_scip/lib, together with SCIP's own DLLs on Windows; the environment variable A401118_SCIP_LIB can name another directory. Windows resolves a DLL's dependencies on PATH rather than next to it, so LibraryLoad loads SoPlex and SCIP from that directory first. The library is looked for once per session; a failed lookup is remembered too.*)
 
 
 (* ::Text:: *)
@@ -52,7 +52,7 @@ lcmTriangleMaxSCIP[f_][vars_List, cliques_List] := Module[{pos, idx, start, out,
   val = f[Length[vars], RawMemoryExport[ConstantArray[1., Length[vars]], "CDouble"], Length[cliques],
     RawMemoryExport[start, "CInt"], RawMemoryExport[If[idx === {}, {0}, idx], "CInt"], 0., out];
   If[val < 0,
-   Message[A401118::scipfail, val]; lcmTriangleMax[vars, cliques],
+   Message[A401118Incremental::scipfail, val]; lcmTriangleMax[vars, cliques],
    Pick[vars, RawMemoryImport[out, {"List", Length[vars]}], 1]]]
 
 
@@ -73,7 +73,7 @@ a401118Solver[head_, method : Automatic | "SCIP"] := With[{f = a401118SCIPFuncti
 a401118Solver[head_, method_] := (Message[head::method, method]; $Failed)
 
 
-(* Calls without options, which A401118.wl defines, now use the Automatic choice too *)
+(* Calls without options, which A401118Incremental.wl defines, now use the Automatic choice too *)
 
 a401118DefaultSolver[head_] := a401118Solver[head, Automatic]
 
@@ -83,17 +83,17 @@ a401118DefaultSolver[head_] := a401118Solver[head, Automatic]
 
 
 (* ::Text:: *)
-(*A401118.wl defines the one-argument forms, which are more specific than these and use a401118DefaultSolver; these definitions take the calls with options.*)
+(*A401118Incremental.wl defines the one-argument forms, which are more specific than these and use a401118DefaultSolver; these definitions take the calls with options.*)
 
 
-Options[A401118] = Options[A401118List] = Options[LCMTriangleFreeSubset] = {Method -> Automatic};
+Options[A401118Incremental] = Options[A401118List] = Options[LCMTriangleFreeSubset] = {Method -> Automatic};
 
 A401118List[nmax_Integer?Positive, opts : OptionsPattern[]] :=
   With[{solve = a401118Solver[A401118List, OptionValue[Method]]},
    If[solve === $Failed, $Failed, First[a401118Run[nmax, solve]]]]
 
-A401118[n_Integer?Positive, opts : OptionsPattern[]] :=
-  With[{solve = a401118Solver[A401118, OptionValue[Method]]},
+A401118Incremental[n_Integer?Positive, opts : OptionsPattern[]] :=
+  With[{solve = a401118Solver[A401118Incremental, OptionValue[Method]]},
    If[solve === $Failed, $Failed, Last[First[a401118Run[n, solve]]]]]
 
 LCMTriangleFreeSubset[n_Integer?Positive, opts : OptionsPattern[]] :=
@@ -105,14 +105,14 @@ LCMTriangleFreeSubset[n_Integer?Positive, opts : OptionsPattern[]] :=
 (*Messages*)
 
 
-A401118::scipfail = "SCIP returned error code `1`; solving this problem with LinearOptimization instead.";
+A401118Incremental::scipfail = "SCIP returned error code `1`; solving this problem with LinearOptimization instead.";
 
 Scan[
   Function[f,
     MessageName[f, "method"] = "Method -> `1` is not Automatic, \"SCIP\" or \"LinearOptimization\".";
     MessageName[f, "noscip"] = "Method -> \"SCIP\" needs the library built from src/c/a401118_scip; none was found in `1`.";
     f[n_, OptionsPattern[]] /; ! (IntegerQ[n] && n > 0) := (Message[f::posint, n]; $Failed)],
-  {A401118, A401118List, LCMTriangleFreeSubset}]
+  {A401118Incremental, A401118List, LCMTriangleFreeSubset}]
 
 
 End[];

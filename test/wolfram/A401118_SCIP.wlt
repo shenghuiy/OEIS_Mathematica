@@ -7,7 +7,7 @@ VerificationTest[
   TestID -> "load-package"
 ]
 
-(* No new public names: the Method option goes on A401118.wl's functions, the helpers stay in OEIS`Private`.
+(* No new public names: the Method option goes on A401118Incremental.wl's functions, the helpers stay in OEIS`Private`.
    Names["OEIS`*"] also holds the other packages' names when the whole suite runs in one kernel, so check by name. *)
 
 VerificationTest[
@@ -18,7 +18,7 @@ VerificationTest[
 ]
 
 VerificationTest[
-  Options /@ {OEIS`A401118, OEIS`A401118List, OEIS`LCMTriangleFreeSubset},
+  Options /@ {OEIS`A401118Incremental, OEIS`A401118List, OEIS`LCMTriangleFreeSubset},
   ConstantArray[{Method -> Automatic}, 3],
   TestID -> "method-option-defined"
 ]
@@ -35,7 +35,7 @@ VerificationTest[
 VerificationTest[
   With[{f = OEIS`Private`a401118SCIPFunction[]},
     {f === $Failed || Head[f] === ForeignFunction,
-     MatchQ[OEIS`Private`a401118Solver[OEIS`A401118, Automatic],
+     MatchQ[OEIS`Private`a401118Solver[OEIS`A401118Incremental, Automatic],
        If[f === $Failed, OEIS`Private`lcmTriangleMax, OEIS`Private`lcmTriangleMaxSCIP[f]]]}],
   {True, True},
   TestID -> "automatic-picks-scip-when-found"
@@ -45,7 +45,7 @@ VerificationTest[
 
 VerificationTest[
   {Block[{OEIS`Private`a401118DefaultSolver = (Throw["default"] &)}, Catch[OEIS`A401118List[5]]],
-   OEIS`Private`a401118DefaultSolver[OEIS`A401118] === OEIS`Private`a401118Solver[OEIS`A401118, Automatic]},
+   OEIS`Private`a401118DefaultSolver[OEIS`A401118Incremental] === OEIS`Private`a401118Solver[OEIS`A401118Incremental, Automatic]},
   {"default", True},
   TestID -> "plain-call-uses-automatic"
 ]
@@ -56,7 +56,7 @@ VerificationTest[
   If[OEIS`Private`a401118SCIPFunction[] === $Failed, True,
     Module[{s = OEIS`LCMTriangleFreeSubset[120, Method -> "SCIP"]},
       OEIS`A401118List[73, Method -> "SCIP"][[{6, 12, 73}]] == {5, 10, 55} &&
-       OEIS`A401118[150, Method -> "SCIP"] == 111 &&
+       OEIS`A401118Incremental[150, Method -> "SCIP"] == 111 &&
        Length[s] == 88 && NoneTrue[OEIS`LCMTriangles[120], SubsetQ[s, #] &]]],
   True,
   TestID -> "scip-if-built"
@@ -66,16 +66,16 @@ VerificationTest[
 
 VerificationTest[
   Block[{OEIS`Private`a401118SCIPFunction = ($Failed &)},
-    {OEIS`Private`a401118Solver[OEIS`A401118, Automatic], OEIS`A401118List[20], OEIS`A401118[20, Method -> "SCIP"]}],
+    {OEIS`Private`a401118Solver[OEIS`A401118Incremental, Automatic], OEIS`A401118List[20], OEIS`A401118Incremental[20, Method -> "SCIP"]}],
   {OEIS`Private`lcmTriangleMax, {1, 2, 3, 4, 5, 5, 6, 7, 8, 9, 10, 10, 11, 12, 12, 13, 14, 15, 16, 16}, $Failed},
-  {OEIS`A401118::noscip},
+  {OEIS`A401118Incremental::noscip},
   TestID -> "no-scip-fallback"
 ]
 
 
 (* Invalid arguments *)
 
-VerificationTest[OEIS`A401118[12, Method -> "Gurobi"], $Failed, {OEIS`A401118::method}, TestID -> "message-method"]
+VerificationTest[OEIS`A401118Incremental[12, Method -> "Gurobi"], $Failed, {OEIS`A401118Incremental::method}, TestID -> "message-method"]
 VerificationTest[OEIS`A401118List[0, Method -> "SCIP"], $Failed, {OEIS`A401118List::posint}, TestID -> "message-posint-with-method"]
 VerificationTest[
   OEIS`LCMTriangleFreeSubset[5, Method -> 3],
