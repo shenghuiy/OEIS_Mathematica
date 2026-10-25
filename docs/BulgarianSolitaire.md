@@ -8,7 +8,7 @@
 - H. Eriksson and M. Jonsson, *Level sizes of the Bulgarian solitaire game tree*, Fibonacci Quart. 55 (2017).
 - P. Ellis, *Bulgarian Solitaire*, Westchester Area Math Circle slides (2019): the cycles for 8 and 17 cards.
 
-Partitions are lists of positive integers in non-increasing order, so `{6, 4, 3, 1, 1}` is five piles. A function that takes a partition gives a message (`BulgarianSolitaireStep::partition`, and so on) and returns `$Failed` when its first argument is not one: `OEIS`BulgarianSolitaireStep[{1, 2}]` and `OEIS`BulgarianSolitaireStep[{}]` both fail this way. `BulgarianSolitairePeriodicPartition` does the same for a necklace that is not a nonempty list of 0s and 1s (`BulgarianSolitairePeriodicPartition::necklace`). The functions of an integer `n` give `::posint` (for example `BulgarianSolitaireCycleCount::posint`) and return `$Failed` when `n` is not a positive integer, and `BulgarianSolitaireQuasiLevelSize` and `BulgarianSolitaireQuasiLeafSize` give `::nonnegint` when `d` is not a nonnegative integer.
+Partitions are lists of positive integers in non-increasing order, so `{6, 4, 3, 1, 1}` is five piles. A function that takes a partition gives a message (`BulgarianSolitaireStep::partition`, and so on) and returns `$Failed` when its first argument is not one: `BulgarianSolitaireStep[{1, 2}]` and `BulgarianSolitaireStep[{}]` both fail this way. `BulgarianSolitairePeriodicPartition` does the same for a necklace that is not a nonempty list of 0s and 1s (`BulgarianSolitairePeriodicPartition::necklace`). The functions of an integer `n` give `::posint` (for example `BulgarianSolitaireCycleCount::posint`) and return `$Failed` when `n` is not a positive integer, and `BulgarianSolitaireQuasiLevelSize` and `BulgarianSolitaireQuasiLeafSize` give `::nonnegint` when `d` is not a nonnegative integer.
 
 **Notation.** $F(m)$ is the $m$-th Fibonacci number: $F(0) = 0$, $F(1) = 1$, $F(m) = F(m-1) + F(m-2)$, so $F(0), F(1), F(2), \dots$ is 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, … In Wolfram code $F(m)$ is `Fibonacci[m]`, and in the Python port it is the helper `_fib(m)`. $p(m)$ is the number of partitions of $m$, `PartitionsP[m]` in Wolfram.
 
@@ -18,7 +18,7 @@ From the repository root:
 
 ```wolfram
 Get["src/wolfram/BulgarianSolitaire.wl"];
-OEIS`BulgarianSolitaireStep[{6, 4, 3, 1, 1}]      (* {5, 5, 3, 2} *)
+BulgarianSolitaireStep[{6, 4, 3, 1, 1}]      (* {5, 5, 3, 2} *)
 ```
 
 Nothing is compiled, so loading and the first call are instant. The computations below run in the interpreter, so run them in your own Wolfram kernel.
@@ -63,7 +63,7 @@ Nothing is compiled, so loading and the first call are instant. The computations
 The 15-card game that opens Hopkins' article:
 
 ```wolfram
-OEIS`BulgarianSolitaireOrbit[{6, 4, 3, 1, 1}]
+BulgarianSolitaireOrbit[{6, 4, 3, 1, 1}]
 ```
 
 ```
@@ -72,39 +72,39 @@ OEIS`BulgarianSolitaireOrbit[{6, 4, 3, 1, 1}]
 ```
 
 ```wolfram
-OEIS`BulgarianSolitaireCycle[{6, 4, 3, 1, 1}]      (* {{5, 4, 3, 2, 1}} *)
-OEIS`BulgarianSolitaireDistance[{6, 4, 3, 1, 1}]   (* 7 *)
+BulgarianSolitaireCycle[{6, 4, 3, 1, 1}]      (* {{5, 4, 3, 2, 1}} *)
+BulgarianSolitaireDistance[{6, 4, 3, 1, 1}]   (* 7 *)
 ```
 
 Cycles. The partitions of 8 have two (Ellis, Hopkins), and 17 is the first n with three:
 
 ```wolfram
-OEIS`BulgarianSolitaireCycles[8]
-OEIS`BulgarianSolitaireCycleCount /@ Range[12]     (* {1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2} *)
-OEIS`BulgarianSolitaireCycleCount[17]              (* 3 *)
+BulgarianSolitaireCycles[8]
+BulgarianSolitaireCycleCount /@ Range[12]     (* {1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2} *)
+BulgarianSolitaireCycleCount[17]              (* 3 *)
 ```
 
 Garden of Eden partitions. `(4, 4, 3, 3, 2, 2, 2)` has rank −3 and no preimage; `(6, 5)` has two preimages:
 
 ```wolfram
-OEIS`BulgarianSolitaireGardenOfEdenQ[{4, 4, 3, 3, 2, 2, 2}]   (* True *)
-OEIS`BulgarianSolitairePreimages[{6, 5}]                      (* {{7, 1, 1, 1, 1}, {6, 1, 1, 1, 1, 1}} *)
-OEIS`BulgarianSolitaireGardenOfEdenCount[20]                  (* p(17) − p(11) + p(2) = 190 *)
-OEIS`BulgarianSolitaireGardenOfEdenCount /@ Range[20]         (* A123975 *)
+BulgarianSolitaireGardenOfEdenQ[{4, 4, 3, 3, 2, 2, 2}]   (* True *)
+BulgarianSolitairePreimages[{6, 5}]                      (* {{7, 1, 1, 1, 1}, {6, 1, 1, 1, 1, 1}} *)
+BulgarianSolitaireGardenOfEdenCount[20]                  (* p(17) − p(11) + p(2) = 190 *)
+BulgarianSolitaireGardenOfEdenCount /@ Range[20]         (* A123975 *)
 ```
 
 Level sizes of the game tree for 10 cards ($k = 4$), the tree of Figure 2 in Eriksson and Jonsson, which has 42 vertices and height $k(k - 1) = 12$:
 
 ```wolfram
-OEIS`BulgarianSolitaireLevelSizes[10]   (* {1, 1, 3, 5, 5, 3, 4, 4, 4, 3, 3, 3, 3} *)
-OEIS`BulgarianSolitaireLeafSizes[10]    (* {0, 0, 0, 1, 3, 1, 1, 1, 2, 1, 1, 0, 3}, 14 leaves in all *)
-OEIS`BulgarianSolitaireGraph[10, VertexLabels -> "Name"]
+BulgarianSolitaireLevelSizes[10]   (* {1, 1, 3, 5, 5, 3, 4, 4, 4, 3, 3, 3, 3} *)
+BulgarianSolitaireLeafSizes[10]    (* {0, 0, 0, 1, 3, 1, 1, 1, 2, 1, 1, 0, 3}, 14 leaves in all *)
+BulgarianSolitaireGraph[10, VertexLabels -> "Name"]
 ```
 
 Level sizes of one cycle: the necklace BW repeated $\ell$ times (Pham, Harris–Nguyen):
 
 ```wolfram
-OEIS`BulgarianSolitaireBasinLevelSizes[OEIS`BulgarianSolitairePeriodicPartition[{1, 0, 1, 0, 1, 0, 1, 0}]]
+BulgarianSolitaireBasinLevelSizes[BulgarianSolitairePeriodicPartition[{1, 0, 1, 0, 1, 0, 1, 0}]]
 ```
 
 For $\ell = 4$ ($n = 32$) this gives `{2, 1, 3, 7, 14, 24, 28, 18}`; for $\ell = 5$ ($n = 50$) `{2, 1, 3, 7, 15, 32, 60, 92, 96, 54}`.
@@ -112,11 +112,11 @@ For $\ell = 4$ ($n = 32$) this gives `{2, 1, 3, 7, 14, 24, 28, 18}`; for $\ell =
 Height, cycle lengths, components and the reversed tree:
 
 ```wolfram
-OEIS`BulgarianSolitaireMaxDistance /@ Range[16]
+BulgarianSolitaireMaxDistance /@ Range[16]
 (* {0, 0, 2, 2, 3, 6, 4, 5, 7, 12, 8, 8, 9, 14, 20, 15}: k(k−1) at n = 3, 6, 10, 15 *)
-OEIS`BulgarianSolitaireCycleLengths /@ {8, 17}                      (* {{2, 4}, {3, 6, 6}} *)
-Length[OEIS`BulgarianSolitaireComponent[{6, 4, 3, 1, 1}]]           (* 176 = p(15): one component *)
-OEIS`BulgarianSolitaireReversedTree[{4, 3, 2, 1}, VertexLabels -> "Name"]
+BulgarianSolitaireCycleLengths /@ {8, 17}                      (* {{2, 4}, {3, 6, 6}} *)
+Length[BulgarianSolitaireComponent[{6, 4, 3, 1, 1}]]           (* 176 = p(15): one component *)
+BulgarianSolitaireReversedTree[{4, 3, 2, 1}, VertexLabels -> "Name"]
 ```
 
 <picture>
@@ -141,7 +141,7 @@ The hook length formula $n!/\prod \text{hooks}$ counts the standard Young tablea
 
 ```wolfram
 hookCount[p_] := Total[p]!/Times @@ Flatten[ResourceFunction["HookLengths"][p]];
-hookCount /@ OEIS`BulgarianSolitaireOrbit[{6, 4, 3, 1, 1}]
+hookCount /@ BulgarianSolitaireOrbit[{6, 4, 3, 1, 1}]
 (* {231660, 96525, 75075, 100100, 125125, 210210, 175175, 292864} *)
 ```
 
