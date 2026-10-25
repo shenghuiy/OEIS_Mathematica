@@ -1,5 +1,5 @@
 (* Tests for src/wolfram/A401118_SCIP.wl. Cases that can run LinearOptimization keep n < 20; the larger ones run only with
-   the SCIP library built (src/c/a401118_scip/lib) and pass trivially without it. *)
+   the SCIP library built (lib/ at the repository root) and pass trivially without it. *)
 
 VerificationTest[
   Get[FileNameJoin[{DirectoryName[$TestFileName], "..", "..", "src", "wolfram", "A401118_SCIP.wl"}]];

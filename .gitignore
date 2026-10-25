@@ -1,3 +1,4 @@
 target/
-src/c/a401118_scip/build/
-src/c/a401118_scip/lib/
+# SCIP, SoPlex and the a401118_scip wrapper: build trees and the built libraries (see docs/A401118_SCIP.md)
+/build/
+/lib/

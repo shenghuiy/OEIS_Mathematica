@@ -1,19 +1,23 @@
 # Builds a401118_scip, the SCIP solver behind Method -> "SCIP" in src/wolfram/A401118_SCIP.wl.
-# The library and, on Windows, the SCIP and SoPlex DLLs it needs go to lib/ next to this file,
-# which is where the package looks for them. See docs/A401118_SCIP.md for the full build steps.
+# The library and, on Windows, the SCIP and SoPlex DLLs it needs go to lib/ at the repository root,
+# which is where the package looks for them. SCIP is found in build/install, where the steps in
+# docs/A401118_SCIP.md install it from the scip and soplex submodules; -DSCIP_DIR=... names another install.
 #
-#   cmake -S src/c/a401118_scip -B src/c/a401118_scip/build -DSCIP_DIR=<SCIP install>/lib/cmake/scip
-#   cmake --build src/c/a401118_scip/build --config Release
+#   cmake -S src/c/a401118_scip -B build/a401118_scip -DCMAKE_BUILD_TYPE=Release
+#   cmake --build build/a401118_scip --config Release
 
 cmake_minimum_required(VERSION 3.16)
 project(a401118_scip C)
+
+get_filename_component(A401118_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../.." ABSOLUTE)
+set(SCIP_DIR "${A401118_ROOT}/build/install/lib/cmake/scip" CACHE PATH "Directory of SCIP's scip-config.cmake")
 
 find_package(SCIP CONFIG REQUIRED)
 
 add_library(a401118_scip SHARED a401118_scip.c)
 target_link_libraries(a401118_scip PRIVATE libscip)
 
-set(A401118_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lib")
+set(A401118_LIB_DIR "${A401118_ROOT}/lib")
 set_target_properties(a401118_scip PROPERTIES
   PREFIX ""
   RUNTIME_OUTPUT_DIRECTORY "${A401118_LIB_DIR}"
