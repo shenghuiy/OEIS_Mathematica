@@ -1,20 +1,15 @@
 (* ::Package:: *)
 
-(* A401118: the size of the largest subset of {1..n} with no three elements whose pairwise LCMs are all equal (Erdos problem 536). The triangles come from prime exponents, and the terms are found one at a time, each where needed as a 0-1 program solved by SCIP (src/c/a401118_scip, through ForeignFunctionLoad) or by LinearOptimization. *)
+(* A401118: the size of the largest subset of {1..n} with no three elements whose pairwise LCMs are all equal (Erdos problem 536). The triangles come from prime exponents, and the terms are found one at a time, each where needed as a 0-1 program solved by LinearOptimization. A401118_SCIP.wl adds SCIP as a faster solver. *)
 
 BeginPackage["OEIS`"];
 
-A401118::usage = "A401118[n] gives the size of the largest subset of {1, ..., n} that contains no LCM triangle: no three elements i, j, k with lcm(i, j) = lcm(j, k) = lcm(k, i). The option Method -> Automatic, \"SCIP\" or \"LinearOptimization\" picks the integer solver; Automatic uses SCIP when its library is found.";
-A401118List::usage = "A401118List[nmax] gives {a(1), ..., a(nmax)} for A401118. It takes the same Method option as A401118.";
+A401118::usage = "A401118[n] gives the size of the largest subset of {1, ..., n} that contains no LCM triangle: no three elements i, j, k with lcm(i, j) = lcm(j, k) = lcm(k, i).";
+A401118List::usage = "A401118List[nmax] gives {a(1), ..., a(nmax)} for A401118.";
 LCMTriangles::usage = "LCMTriangles[n] gives every LCM triangle {i, j, k} with i < j < k <= n and lcm(i, j) = lcm(j, k) = lcm(k, i), sorted by k and then i.";
-LCMTriangleFreeSubset::usage = "LCMTriangleFreeSubset[n] gives a largest subset of {1, ..., n} with no LCM triangle, of size A401118[n]. It takes the same Method option as A401118.";
+LCMTriangleFreeSubset::usage = "LCMTriangleFreeSubset[n] gives a largest subset of {1, ..., n} with no LCM triangle, of size A401118[n].";
 
 Begin["`Private`"];
-
-
-(* The SCIP library is looked up relative to this file, so remember where it was loaded from *)
-
-a401118PackageDirectory = DirectoryName[$InputFileName];
 
 
 (* ::Subsection:: *)
@@ -78,62 +73,7 @@ lcmTriangleMax[vars_List, cliques_List] := Module[{x, sol},
   Select[vars, Round[x[#] /. sol] == 1 &]]
 
 
-(* ::Subsection:: *)
-(*SCIP through ForeignFunctionLoad*)
-
-
-(* ::Text:: *)
-(*src/c/a401118_scip/a401118_scip.c solves the same 0-1 program with SCIP. Its CMake build puts a401118_scip.dll (.so, .dylib) in src/c/a401118_scip/lib, together with SCIP's own DLLs on Windows; the environment variable A401118_SCIP_LIB can name another directory. Windows resolves a DLL's dependencies on PATH rather than next to it, so LibraryLoad loads SoPlex and SCIP from that directory first. The library is looked for once per session; a failed lookup is remembered too.*)
-
-
-(* ::Text:: *)
-(*The model is passed as flat arrays: weights (all 1), and the cliques in compressed form, start offsets plus 0-based variable indices. SCIP is about 5 times faster than LinearOptimization on the m = 198 problem (0.75 s against 3.7 s).*)
-
-
-a401118SCIPDirectory[] := With[{env = Environment["A401118_SCIP_LIB"]},
-  If[StringQ[env], env, FileNameJoin[{a401118PackageDirectory, "..", "c", "a401118_scip", "lib"}]]]
-
-a401118SCIPFunction[] := a401118SCIPFunction[] = Module[{dir = a401118SCIPDirectory[], lib, f},
-  lib = FileNameJoin[{dir, "a401118_scip" <> Switch[$OperatingSystem, "Windows", ".dll", "MacOSX", ".dylib", _, ".so"]}];
-  If[! FileExistsQ[lib], Return[$Failed, Module]];
-  If[$OperatingSystem === "Windows",
-   Scan[Quiet[LibraryLoad[#]] &, Join[FileNames["libsoplex*.dll", dir], FileNames["libscip*.dll", dir]]]];
-  f = Quiet[ForeignFunctionLoad[lib, "a401118_scip_max",
-     {"CInt", "RawPointer"::["CDouble"], "CInt", "RawPointer"::["CInt"], "RawPointer"::["CInt"], "CDouble", "RawPointer"::["CInt"]} -> "CInt"]];
-  If[Head[f] === ForeignFunction, f, $Failed]]
-
-(* Same contract as lcmTriangleMax: the elements of vars kept in an optimal solution. A SCIP error code falls back to LinearOptimization for that problem. *)
-
-lcmTriangleMaxSCIP[f_][vars_List, cliques_List] := Module[{pos, idx, start, out, val},
-  pos = AssociationThread[vars -> Range[0, Length[vars] - 1]];
-  idx = Flatten[Lookup[pos, #] & /@ cliques];
-  start = Prepend[Accumulate[Length /@ cliques], 0];
-  out = RawMemoryAllocate["CInt", Length[vars]];
-  val = f[Length[vars], RawMemoryExport[ConstantArray[1., Length[vars]], "CDouble"], Length[cliques],
-    RawMemoryExport[start, "CInt"], RawMemoryExport[If[idx === {}, {0}, idx], "CInt"], 0., out];
-  If[val < 0,
-   Message[A401118::scipfail, val]; lcmTriangleMax[vars, cliques],
-   Pick[vars, RawMemoryImport[out, {"List", Length[vars]}], 1]]]
-
-
-(* ::Subsection:: *)
-(*Choosing the solver*)
-
-
-(* a401118Solver[head, method] gives the function to call as solve[vars, cliques], or $Failed after a message from head *)
-
-a401118Solver[_, "LinearOptimization"] := lcmTriangleMax
-
-a401118Solver[head_, method : Automatic | "SCIP"] := With[{f = a401118SCIPFunction[]},
-  Which[
-   f =!= $Failed, lcmTriangleMaxSCIP[f],
-   method === Automatic, lcmTriangleMax,
-   True, Message[head::noscip, a401118SCIPDirectory[]]; $Failed]]
-
-a401118Solver[head_, method_] := (Message[head::method, method]; $Failed)
-
-
-(* Returns {{a(1), ..., a(nmax)}, a largest triangle-free subset of {1..nmax}} *)
+(* Returns {{a(1), ..., a(nmax)}, a largest triangle-free subset of {1..nmax}}; solve[vars, cliques] gives the elements of vars kept in an optimal solution *)
 
 a401118Run[nmax_Integer, solve_] := Module[{a = 0, inS = <||>, inT = <||>, byL = <||>, cliques = <||>, terms, new, vars, w},
   terms = Table[
@@ -156,39 +96,29 @@ a401118Run[nmax_Integer, solve_] := Module[{a = 0, inS = <||>, inT = <||>, byL =
 (*Public functions*)
 
 
+(* The solver for calls without options; A401118_SCIP.wl replaces this definition (same left-hand side) with its Method -> Automatic choice *)
+
+a401118DefaultSolver[head_] := lcmTriangleMax
+
+
 LCMTriangles[n_Integer?Positive] := lcmTrianglesTop[1, n]
 
-Options[A401118] = Options[A401118List] = Options[LCMTriangleFreeSubset] = {Method -> Automatic};
+A401118List[nmax_Integer?Positive] := First[a401118Run[nmax, a401118DefaultSolver[A401118List]]]
 
-A401118List[nmax_Integer?Positive, opts : OptionsPattern[]] :=
-  With[{solve = a401118Solver[A401118List, OptionValue[Method]]},
-   If[solve === $Failed, $Failed, First[a401118Run[nmax, solve]]]]
+A401118[n_Integer?Positive] := Last[A401118List[n]]
 
-A401118[n_Integer?Positive, opts : OptionsPattern[]] :=
-  With[{solve = a401118Solver[A401118, OptionValue[Method]]},
-   If[solve === $Failed, $Failed, Last[First[a401118Run[n, solve]]]]]
-
-LCMTriangleFreeSubset[n_Integer?Positive, opts : OptionsPattern[]] :=
-  With[{solve = a401118Solver[LCMTriangleFreeSubset, OptionValue[Method]]},
-   If[solve === $Failed, $Failed, Last[a401118Run[n, solve]]]]
+LCMTriangleFreeSubset[n_Integer?Positive] := Last[a401118Run[n, a401118DefaultSolver[LCMTriangleFreeSubset]]]
 
 
 (* ::Subsection:: *)
 (*Invalid arguments*)
 
 
-A401118::scipfail = "SCIP returned error code `1`; solving this problem with LinearOptimization instead.";
-
-LCMTriangles::posint = "`1` is not a positive integer.";
-LCMTriangles[n_] /; ! (IntegerQ[n] && n > 0) := (Message[LCMTriangles::posint, n]; $Failed)
-
 Scan[
   Function[f,
     MessageName[f, "posint"] = "`1` is not a positive integer.";
-    MessageName[f, "method"] = "Method -> `1` is not Automatic, \"SCIP\" or \"LinearOptimization\".";
-    MessageName[f, "noscip"] = "Method -> \"SCIP\" needs the library built from src/c/a401118_scip; none was found in `1`.";
-    f[n_, OptionsPattern[]] /; ! (IntegerQ[n] && n > 0) := (Message[f::posint, n]; $Failed)],
-  {A401118, A401118List, LCMTriangleFreeSubset}]
+    f[n_] /; ! (IntegerQ[n] && n > 0) := (Message[f::posint, n]; $Failed)],
+  {A401118, A401118List, LCMTriangles, LCMTriangleFreeSubset}]
 
 
 End[];

@@ -1,4 +1,4 @@
-/* SCIP solver for src/wolfram/A401118.wl (Method -> "SCIP"), loaded there with ForeignFunctionLoad.
+/* SCIP solver for src/wolfram/A401118_SCIP.wl (Method -> "SCIP"), loaded there with ForeignFunctionLoad.
 
    Maximizes sum w[j] x[j] over 0-1 x subject to sum_{j in clique c} x[j] <= 2.
    Cliques are given in CSR form: clique c is clidx[clstart[c]] .. clidx[clstart[c+1] - 1], 0-based.

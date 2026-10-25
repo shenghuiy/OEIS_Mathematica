@@ -10,10 +10,18 @@ VerificationTest[
 (* Only the four documented functions are public; helpers and pattern variables stay in OEIS`Private` *)
 
 VerificationTest[
-  NameQ /@ {"OEIS`n", "OEIS`m", "OEIS`x", "OEIS`f", "OEIS`solve", "OEIS`lcmTrianglesC", "OEIS`a401118Run", "OEIS`a401118Solver",
-    "OEIS`Private`lcmTrianglesC", "OEIS`Private`a401118Run", "OEIS`Private`a401118Solver"},
+  NameQ /@ {"OEIS`n", "OEIS`m", "OEIS`x", "OEIS`f", "OEIS`solve", "OEIS`lcmTrianglesC", "OEIS`a401118Run", "OEIS`a401118DefaultSolver",
+    "OEIS`Private`lcmTrianglesC", "OEIS`Private`a401118Run", "OEIS`Private`a401118DefaultSolver"},
   {False, False, False, False, False, False, False, False, True, True, True},
   TestID -> "only-documented-public"
+]
+
+(* Loading A401118.wl alone (or again) gives the LinearOptimization solver; A401118_SCIP.wl's Method option is not defined by it *)
+
+VerificationTest[
+  OEIS`Private`a401118DefaultSolver[OEIS`A401118] === OEIS`Private`lcmTriangleMax,
+  True,
+  TestID -> "default-solver-linearoptimization"
 ]
 
 
@@ -100,45 +108,6 @@ VerificationTest[
 VerificationTest[OEIS`A401118[100], OEIS`A401118List[100][[100]], TestID -> "single-term-vs-list"]
 
 
-(* The Method option. Tests above use Automatic, which is SCIP when src/c/a401118_scip/lib holds the library. *)
-
-VerificationTest[
-  OEIS`A401118List[150, Method -> "LinearOptimization"] === OEIS`A401118List[150, Method -> Automatic],
-  True,
-  TestID -> "method-linearoptimization-150"
-]
-
-VerificationTest[
-  With[{f = OEIS`Private`a401118SCIPFunction[]},
-    {f === $Failed || Head[f] === ForeignFunction,
-     MatchQ[OEIS`Private`a401118Solver[OEIS`A401118, Automatic],
-       If[f === $Failed, OEIS`Private`lcmTriangleMax, OEIS`Private`lcmTriangleMaxSCIP[f]]]}],
-  {True, True},
-  TestID -> "method-automatic-picks-scip-when-found"
-]
-
-(* When the SCIP library is built, Method -> "SCIP" must agree with the b-file and give a valid witness *)
-
-VerificationTest[
-  If[OEIS`Private`a401118SCIPFunction[] === $Failed, True,
-    Module[{s = OEIS`LCMTriangleFreeSubset[120, Method -> "SCIP"]},
-      OEIS`A401118List[73, Method -> "SCIP"][[{6, 12, 73}]] == {5, 10, 55} &&
-       Length[s] == 88 && NoneTrue[OEIS`LCMTriangles[120], SubsetQ[s, #] &]]],
-  True,
-  TestID -> "method-scip-if-built"
-]
-
-(* Without the library, Automatic falls back to LinearOptimization and "SCIP" is an error *)
-
-VerificationTest[
-  Block[{OEIS`Private`a401118SCIPFunction = ($Failed &)},
-    {OEIS`Private`a401118Solver[OEIS`A401118, Automatic], OEIS`A401118List[20], OEIS`A401118[20, Method -> "SCIP"]}],
-  {OEIS`Private`lcmTriangleMax, {1, 2, 3, 4, 5, 5, 6, 7, 8, 9, 10, 10, 11, 12, 12, 13, 14, 15, 16, 16}, $Failed},
-  {OEIS`A401118::noscip},
-  TestID -> "method-no-scip"
-]
-
-VerificationTest[OEIS`A401118[12, Method -> "Gurobi"], $Failed, {OEIS`A401118::method}, TestID -> "message-method"]
 
 
 (* Invalid arguments *)

@@ -1,6 +1,6 @@
-# Builds a401118_scip, the SCIP solver behind Method -> "SCIP" in src/wolfram/A401118.wl.
+# Builds a401118_scip, the SCIP solver behind Method -> "SCIP" in src/wolfram/A401118_SCIP.wl.
 # The library and, on Windows, the SCIP and SoPlex DLLs it needs go to lib/ next to this file,
-# which is where the package looks for them. See docs/A401118.md for the full build steps.
+# which is where the package looks for them. See docs/A401118_SCIP.md for the full build steps.
 #
 #   cmake -S src/c/a401118_scip -B src/c/a401118_scip/build -DSCIP_DIR=<SCIP install>/lib/cmake/scip
 #   cmake --build src/c/a401118_scip/build --config Release
