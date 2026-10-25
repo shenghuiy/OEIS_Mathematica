@@ -4,7 +4,8 @@
    Cliques are given in CSR form: clique c is clidx[clstart[c]] .. clidx[clstart[c+1] - 1], 0-based.
    A positive timelimit is passed to SCIP's limits/time.
    Returns the optimal value rounded to an integer and writes x to xout, or a negative code on failure:
-   -2 a SCIP call failed, -3 SCIPcreate failed, -4 a clique has more than 64 elements, -5 not solved to optimality. */
+   -2 a SCIP call failed, -3 SCIPcreate failed, -4 a clique has more than 64 elements, -5 not solved to optimality,
+   -6 out of memory. */
 
 #include <math.h>
 #include <stdio.h>
@@ -40,6 +41,7 @@ EXPORT int a401118_scip_max(int nv, const double* w, int ncl, const int* clstart
    CHECK( SCIPsetObjsense(scip, SCIP_OBJSENSE_MAXIMIZE) );
 
    vars = (SCIP_VAR**) calloc((size_t) nv, sizeof(SCIP_VAR*));
+   if (vars == NULL && nv > 0) { status = -6; goto TERMINATE; }
    for (j = 0; j < nv; ++j)
    {
       snprintf(name, sizeof(name), "x%d", j);
@@ -50,6 +52,7 @@ EXPORT int a401118_scip_max(int nv, const double* w, int ncl, const int* clstart
    for (c = 0; c < ncl; ++c)
    {
       SCIP_CONS* cons;
+      SCIP_RETCODE added;
       int len = clstart[c + 1] - clstart[c];
       SCIP_VAR* cv[64];
       double ones[64];
@@ -57,8 +60,10 @@ EXPORT int a401118_scip_max(int nv, const double* w, int ncl, const int* clstart
       for (j = 0; j < len; ++j) { cv[j] = vars[clidx[clstart[c] + j]]; ones[j] = 1.0; }
       snprintf(name, sizeof(name), "c%d", c);
       CHECK( SCIPcreateConsBasicLinear(scip, &cons, name, len, cv, ones, -SCIPinfinity(scip), 2.0) );
-      CHECK( SCIPaddCons(scip, cons) );
+      /* release cons before checking the add, so a failed add does not leave it unreleased */
+      added = SCIPaddCons(scip, cons);
       CHECK( SCIPreleaseCons(scip, &cons) );
+      CHECK( added );
    }
 
    CHECK( SCIPsolve(scip) );
