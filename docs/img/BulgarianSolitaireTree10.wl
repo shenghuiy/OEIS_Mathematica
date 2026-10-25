@@ -9,7 +9,7 @@ root = {4, 3, 2, 1};
 
 (* a preimage p of q comes from playing a part of q equal to Length[p]; j is that part's first position in q *)
 build[q_] := Tree[Row[q], KeySort@Association[
-   FirstPosition[q, Length[#]][[1]] -> build[#] & /@ DeleteCases[OEIS`BulgarianSolitairePreimages[q], root]]];
+   FirstPosition[q, Length[#]][[1]] -> build[#] & /@ DeleteCases[BulgarianSolitairePreimages[q], root]]];
 
 t = build[root];
 

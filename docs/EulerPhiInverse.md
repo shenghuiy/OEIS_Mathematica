@@ -8,7 +8,7 @@ From the repository root:
 
 ```wolfram
 Get["src/wolfram/EulerPhiInverse.wl"];
-OEIS`EulerPhiInverse[24]
+EulerPhiInverse[24]
 ```
 
 ```
@@ -28,10 +28,10 @@ Loading is instant. The compiled kernel is built the first time it is needed, wh
 ## Examples
 
 ```wolfram
-OEIS`EulerPhiInverse[1]    (* {1, 2} *)
-OEIS`EulerPhiInverse[12]   (* {13, 21, 26, 28, 36, 42} *)
-OEIS`EulerPhiInverse[14]   (* {}: no x has φ(x) = 14 *)
-OEIS`EulerPhiInverse[3]    (* {}: φ(x) is even for x > 2 *)
+EulerPhiInverse[1]    (* {1, 2} *)
+EulerPhiInverse[12]   (* {13, 21, 26, 28, 36, 42} *)
+EulerPhiInverse[14]   (* {}: no x has φ(x) = 14 *)
+EulerPhiInverse[3]    (* {}: φ(x) is even for x > 2 *)
 ```
 
 ## How it works

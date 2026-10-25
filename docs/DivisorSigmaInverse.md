@@ -8,7 +8,7 @@ From the repository root:
 
 ```wolfram
 Get["src/wolfram/DivisorSigmaInverse.wl"];
-OEIS`DivisorSigmaInverse[12]
+DivisorSigmaInverse[12]
 ```
 
 ```
@@ -30,17 +30,17 @@ Both 6 (divisors 1, 2, 3, 6) and 11 (divisors 1, 11) have $\sigma_1 = 12$.
 ## Examples
 
 ```wolfram
-OEIS`DivisorSigmaInverse[24]          (* {14, 15, 23} *)
-OEIS`DivisorSigmaInverse[31]          (* {16, 25} *)
-OEIS`DivisorSigmaInverse[10]          (* {}: no x has σ(x) = 10 *)
-OEIS`DivisorSigmaInverse[50, 2]       (* {6, 7}: σ₂(6) = σ₂(7) = 50 *)
-OEIS`DivisorSigmaInverse[24, 1, 20]   (* {14, 15}: only solutions up to 20 *)
+DivisorSigmaInverse[24]          (* {14, 15, 23} *)
+DivisorSigmaInverse[31]          (* {16, 25} *)
+DivisorSigmaInverse[10]          (* {}: no x has σ(x) = 10 *)
+DivisorSigmaInverse[50, 2]       (* {6, 7}: σ₂(6) = σ₂(7) = 50 *)
+DivisorSigmaInverse[24, 1, 20]   (* {14, 15}: only solutions up to 20 *)
 ```
 
 The per-divisor form, for $n = 12$ with `Divisors[12] = {1, 2, 3, 4, 6, 12}`:
 
 ```wolfram
-OEIS`invSigmaDivisors[12]
+invSigmaDivisors[12]
 ```
 
 ```
