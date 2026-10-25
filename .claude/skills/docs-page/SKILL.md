@@ -9,7 +9,7 @@ Every page in `docs/` and the READMEs is read on github.com, so a page is done w
 
 ## How GitHub renders math
 
-GitHub typesets `$...$` and `$$...$$` with MathJax, but two things happen first.
+GitHub typesets `$...$` and `$$...$$` with MathJax, but three things happen first.
 
 1. **Markdown escapes run before MathJax.** A backslash before ASCII punctuation is a Markdown escape, so GitHub drops the backslash and MathJax sees only the punctuation. This happens in inline and display math alike:
 
@@ -22,6 +22,8 @@ GitHub typesets `$...$` and `$$...$$` with MathJax, but two things happen first.
    Macros spelled with letters (`\lbrace`, `\thinspace`, `\sum`, `\dots`) are not Markdown escapes and pass through untouched. Everything in the right-hand column, and `\mathrm`, has been seen typesetting correctly on GitHub.
 
 2. **Some macros are refused.** GitHub replaces the formula with "The following macros are not allowed: operatorname". For an operator name write `\mathrm{lcm}`; the operators MathJax has built in (`\gcd`, `\max`, `\log`, `\sum`) work as they are.
+
+3. **`_` after punctuation, and `*`, can become emphasis.** When one line has two inline formulas like `$\mathrm{diag}_k$ to $\mathrm{diag}_{k+1}$` or `$H_{P^*}$ ... $P^*$`, Markdown pairs the `}_` underscores, or the asterisks, as `<em>...</em>` across the text between them. Both formulas then show as raw TeX with the text between them in italics, and the checker does not catch this. Write those formulas in GitHub's code-span form, $`\mathrm{diag}_k`$, which Markdown leaves alone. An underscore after a letter (`H_{x}`, `a_n`) is inside a word and never pairs.
 
 ## Check every page you touch
 
