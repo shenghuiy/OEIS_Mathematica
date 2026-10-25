@@ -58,7 +58,7 @@ a401118LPSolve[vars_List, cliques_List] := Module[{x, sol},
 
 
 (* ::Text:: *)
-(*src/c/a401118_scip/a401118_scip.c solves the same program with SCIP's C API. Its CMake build puts a401118_scip.dll (.so, .dylib) in src/c/a401118_scip/lib, together with SCIP's own DLLs on Windows; the environment variable A401118_SCIP_LIB can name another directory. Windows resolves a DLL's dependencies on PATH rather than next to it, so LibraryLoad loads SoPlex and SCIP from that directory first. The library is looked for once per session; a failed lookup is remembered too.*)
+(*src/c/a401118_scip/a401118_scip.c solves the same program with SCIP's C API. Its CMake build puts a401118_scip.dll (.so, .dylib) in lib/ at the repository root, together with SCIP's own DLLs on Windows; the environment variable A401118_SCIP_LIB can name another directory. Windows resolves a DLL's dependencies on PATH rather than next to it, so LibraryLoad loads SoPlex and SCIP from that directory first. The library is looked for once per session; a failed lookup is remembered too.*)
 
 
 (* ::Text:: *)
@@ -66,7 +66,7 @@ a401118LPSolve[vars_List, cliques_List] := Module[{x, sol},
 
 
 a401118SCIPDirectory[] := With[{env = Environment["A401118_SCIP_LIB"]},
-  If[StringQ[env], env, FileNameJoin[{a401118SCIPPackageDirectory, "..", "c", "a401118_scip", "lib"}]]]
+  If[StringQ[env], env, FileNameJoin[{a401118SCIPPackageDirectory, "..", "..", "lib"}]]]
 
 a401118SCIPFunction[] := a401118SCIPFunction[] = Module[{dir = a401118SCIPDirectory[], lib, f},
   lib = FileNameJoin[{dir, "a401118_scip" <> Switch[$OperatingSystem, "Windows", ".dll", "MacOSX", ".dylib", _, ".so"]}];
