@@ -4,7 +4,7 @@
 
 BeginPackage["OEIS`"];
 
-A401118SCIP::usage = "A401118SCIP[n] gives the size of the largest subset of {1..n} having no 3-element subset {x, y, z} with lcm(x, y) = lcm(y, z) = lcm(z, x), by solving an integer linear program. The option Method -> Automatic, \"SCIP\" or \"LinearOptimization\" picks the solver; Automatic uses SCIP when its library (built from src/c/a401118_scip) is found.";
+A401118SCIP::usage = "A401118SCIP[n] gives the size of the largest subset of {1..n} having no 3-element subset {x, y, z} with lcm(x, y) = lcm(y, z) = lcm(z, x), by solving an integer linear program. A401118SCIP[n, \"Subset\"] gives one such subset of that size, and A401118SCIP[n, \"Size\"] is the same as A401118SCIP[n]. The option Method -> Automatic, \"SCIP\" or \"LinearOptimization\" picks the solver; Automatic uses SCIP when its library (built from src/c/a401118_scip) is found.";
 
 Begin["`Private`"];
 
@@ -114,9 +114,14 @@ a401118SCIPSolver[method_] := (Message[A401118SCIP::method, method]; $Failed)
 
 Options[A401118SCIP] = {Method -> Automatic};
 
-A401118SCIP[n_Integer?Positive, opts : OptionsPattern[]] :=
+A401118SCIP[n_Integer?Positive, opts : OptionsPattern[]] := A401118SCIP[n, "Size", opts]
+
+A401118SCIP[n_Integer?Positive, prop : "Size" | "Subset", opts : OptionsPattern[]] :=
   With[{solve = a401118SCIPSolver[OptionValue[Method]]},
-   If[solve === $Failed, $Failed, Length[a401118SCIPSet[n, solve]]]]
+   Which[
+    solve === $Failed, $Failed,
+    prop === "Subset", a401118SCIPSet[n, solve],
+    True, Length[a401118SCIPSet[n, solve]]]]
 
 
 (* ::Subsection:: *)
@@ -124,11 +129,14 @@ A401118SCIP[n_Integer?Positive, opts : OptionsPattern[]] :=
 
 
 A401118SCIP::posint = "`1` is not a positive integer.";
+A401118SCIP::prop = "`1` is not \"Size\" or \"Subset\".";
 A401118SCIP::method = "Method -> `1` is not Automatic, \"SCIP\" or \"LinearOptimization\".";
 A401118SCIP::noscip = "Method -> \"SCIP\" needs the library built from src/c/a401118_scip; none was found in `1`.";
 A401118SCIP::scipfail = "SCIP returned error code `1`; solving with LinearOptimization instead.";
 
 A401118SCIP[n_, OptionsPattern[]] /; ! (IntegerQ[n] && n > 0) := (Message[A401118SCIP::posint, n]; $Failed)
+A401118SCIP[n_, _String, OptionsPattern[]] /; ! (IntegerQ[n] && n > 0) := (Message[A401118SCIP::posint, n]; $Failed)
+A401118SCIP[n_Integer?Positive, prop : Except[_?OptionQ], OptionsPattern[]] := (Message[A401118SCIP::prop, prop]; $Failed)
 
 
 End[];
