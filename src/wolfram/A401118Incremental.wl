@@ -1,6 +1,6 @@
 (* ::Package:: *)
 
-(* A401118: the size of the largest subset of {1..n} with no three elements whose pairwise LCMs are all equal (Erdos problem 536). The triangles come from prime exponents, and the terms are found one at a time, each where needed as a 0-1 program solved by LinearOptimization. A401118_SCIP.wl adds SCIP as a faster solver. *)
+(* A401118: the size of the largest subset of {1..n} with no three elements whose pairwise LCMs are all equal (Erdos problem 536). The triangles come from prime exponents, and the terms are found one at a time, each where needed as a 0-1 program solved by LinearOptimization. *)
 
 BeginPackage["OEIS`"];
 
@@ -96,18 +96,13 @@ a401118Run[nmax_Integer, solve_] := Module[{a = 0, inS = <||>, inT = <||>, byL =
 (*Public functions*)
 
 
-(* The solver for calls without options; A401118_SCIP.wl replaces this definition (same left-hand side) with its Method -> Automatic choice *)
-
-a401118DefaultSolver[head_] := lcmTriangleMax
-
-
 LCMTriangles[n_Integer?Positive] := lcmTrianglesTop[1, n]
 
-A401118List[nmax_Integer?Positive] := First[a401118Run[nmax, a401118DefaultSolver[A401118List]]]
+A401118List[nmax_Integer?Positive] := First[a401118Run[nmax, lcmTriangleMax]]
 
 A401118Incremental[n_Integer?Positive] := Last[A401118List[n]]
 
-LCMTriangleFreeSubset[n_Integer?Positive] := Last[a401118Run[n, a401118DefaultSolver[LCMTriangleFreeSubset]]]
+LCMTriangleFreeSubset[n_Integer?Positive] := Last[a401118Run[n, lcmTriangleMax]]
 
 
 (* ::Subsection:: *)

@@ -10,18 +10,18 @@ VerificationTest[
 (* Only the four documented functions are public; helpers and pattern variables stay in OEIS`Private` *)
 
 VerificationTest[
-  NameQ /@ {"OEIS`n", "OEIS`m", "OEIS`x", "OEIS`f", "OEIS`solve", "OEIS`lcmTrianglesC", "OEIS`a401118Run", "OEIS`a401118DefaultSolver",
-    "OEIS`Private`lcmTrianglesC", "OEIS`Private`a401118Run", "OEIS`Private`a401118DefaultSolver"},
+  NameQ /@ {"OEIS`n", "OEIS`m", "OEIS`x", "OEIS`f", "OEIS`solve", "OEIS`lcmTrianglesC", "OEIS`a401118Run", "OEIS`lcmTriangleMax",
+    "OEIS`Private`lcmTrianglesC", "OEIS`Private`a401118Run", "OEIS`Private`lcmTriangleMax"},
   {False, False, False, False, False, False, False, False, True, True, True},
   TestID -> "only-documented-public"
 ]
 
-(* Loading A401118Incremental.wl alone (or again) gives the LinearOptimization solver; A401118_SCIP.wl's Method option is not defined by it *)
+(* Plain calls solve with LinearOptimization (lcmTriangleMax); m = 6 needs a solve, for the triangle {2, 3, 6} *)
 
 VerificationTest[
-  OEIS`Private`a401118DefaultSolver[OEIS`A401118Incremental] === OEIS`Private`lcmTriangleMax,
-  True,
-  TestID -> "default-solver-linearoptimization"
+  Block[{OEIS`Private`lcmTriangleMax = (Throw["lo"] &)}, Catch[OEIS`A401118List[6]]],
+  "lo",
+  TestID -> "plain-call-uses-linearoptimization"
 ]
 
 
