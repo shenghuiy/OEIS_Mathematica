@@ -1,5 +1,5 @@
 # Builds a401118_scip, the SCIP solver behind Method -> "SCIP" in src/wolfram/A401118_SCIP.wl.
-# The library and, on Windows, the SCIP and SoPlex DLLs it needs go to lib/ at the repository root,
+# The library and, on Windows, the SCIP and SoPlex DLLs it needs go to build/ at the repository root,
 # which is where the package looks for them. SCIP is found in build/install, where the steps in
 # docs/A401118_SCIP.md install it from the scip and soplex submodules; -DSCIP_DIR=... names another install.
 #
@@ -17,7 +17,7 @@ find_package(SCIP CONFIG REQUIRED)
 add_library(a401118_scip SHARED a401118_scip.c)
 target_link_libraries(a401118_scip PRIVATE libscip)
 
-set(A401118_LIB_DIR "${A401118_ROOT}/lib")
+set(A401118_LIB_DIR "${A401118_ROOT}/build")
 set_target_properties(a401118_scip PROPERTIES
   PREFIX ""
   RUNTIME_OUTPUT_DIRECTORY "${A401118_LIB_DIR}"
@@ -27,7 +27,7 @@ set_target_properties(a401118_scip PROPERTIES
   BUILD_RPATH "${SCIP_DIR}/../..")
 
 # Windows finds a DLL's dependencies on PATH, not next to it, so copy SCIP's DLLs (libscip, libsoplexshared)
-# into lib/; the package loads them before the wrapper. Elsewhere BUILD_RPATH points at SCIP's lib directory.
+# into build/; the package loads them before the wrapper. Elsewhere BUILD_RPATH points at SCIP's lib directory.
 if(WIN32)
   file(GLOB A401118_SCIP_DLLS "${SCIP_DIR}/../../../bin/*.dll")
   add_custom_command(TARGET a401118_scip POST_BUILD
