@@ -23,7 +23,7 @@ GitHub typesets `$...$` and `$$...$$` with MathJax, but three things happen firs
 
 2. **Some macros are refused.** GitHub replaces the formula with "The following macros are not allowed: operatorname". For an operator name write `\mathrm{lcm}`; the operators MathJax has built in (`\gcd`, `\max`, `\log`, `\sum`) work as they are.
 
-3. **An underscore after punctuation can become emphasis.** When one line has two inline formulas like `$\mathrm{diag}_k$ to $\mathrm{diag}_{k+1}$`, Markdown pairs the `}_` underscores as `<em>...</em>` across the text between them. Both formulas then show as raw TeX with the text between them in italics, and the checker does not catch this. Write those formulas in GitHub's code-span form, $`\mathrm{diag}_k`$, which Markdown leaves alone. An underscore after a letter (`H_{x}`, `a_n`) is inside a word and never pairs.
+3. **`_` after punctuation, and `*`, can become emphasis.** When one line has two inline formulas like `$\mathrm{diag}_k$ to $\mathrm{diag}_{k+1}$` or `$H_{P^*}$ ... $P^*$`, Markdown pairs the `}_` underscores, or the asterisks, as `<em>...</em>` across the text between them. Both formulas then show as raw TeX with the text between them in italics, and the checker does not catch this. Write those formulas in GitHub's code-span form, $`\mathrm{diag}_k`$, which Markdown leaves alone. An underscore after a letter (`H_{x}`, `a_n`) is inside a word and never pairs.
 
 ## Check every page you touch
 
