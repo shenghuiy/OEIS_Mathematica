@@ -8,6 +8,11 @@
             "type": "command",
             "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/mvn-test-on-java-edit.js\"",
             "timeout": 600
+          },
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/wolfram-short-public-names.js\"",
+            "timeout": 30
           }
         ]
       }

@@ -26,7 +26,7 @@ python -m unittest discover -s test/python -v        # Python tests (CI: .github
 
 On the user's Windows machine, `python` on `PATH` is the Microsoft Store stub ("Python was not found"); use Python 3.14, `C:\Users\sheng\AppData\Local\Programs\Python\Python314\python.exe` (or `py`, whose default is 3.14). Maven 3.9.16 is at `D:\apache-maven-3.9.16` (its `bin` is on the user `PATH`), running on Java 11.
 
-`.claude/settings.json` has a PostToolUse hook (`.claude/hooks/mvn-test-on-java-edit.js`) that runs `mvn -q test` after any edit under `src/java/` and feeds failures back; it skips with a message when no Maven is found on `PATH`.
+`.claude/settings.json` has a PostToolUse hook (`.claude/hooks/mvn-test-on-java-edit.js`) that runs `mvn -q test` after any edit under `src/java/` and feeds failures back; it skips with a message when no Maven is found on `PATH`. A second one (`.claude/hooks/wolfram-short-public-names.js`) flags public Wolfram symbols written with the `OEIS`` prefix in `.wlt` files, `docs/` pages and READMEs: write `TopSpinSolve[...]`, not `OEIS`TopSpinSolve[...]`. Private helpers keep `OEIS`Private`helper`.
 
 To update the recorded results after `mvn test`, copy `CarrylessArithmeticTest.txt` and `TEST-CarrylessArithmeticTest.xml` from `target/surefire-reports/` into `test/java/results/`.
 

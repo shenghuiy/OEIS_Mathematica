@@ -26,8 +26,11 @@ The case that happened: `A399539.wl` had `A399539[n_Integer?Positive] := isokSeg
 
 ## Tests
 
-- Call public functions by full name (`OEIS`A399539[...]`) and private helpers as `OEIS`Private`helper[...]`. Each fully qualified name is created in exactly that context, so a misspelled or moved helper shows up as a failing test instead of a new public symbol.
+- Call public functions by their short name (`A399539[...]`, `TopSpinSolve[...]`), without `OEIS``. `TestReport` reads and evaluates a `.wlt` one test at a time, so once the `load-package` test has run, `OEIS`` is on `$ContextPath` and the short name resolves there. The `load-package` test itself must name no public symbol: a name parsed before the package loads lands in `Global``, and `EndPackage[]` then fails on `::shdw`.
+- Call private helpers by full name, `OEIS`Private`helper[...]`. That name is created in exactly that context, so a misspelled or moved helper shows up as a failing test instead of a new symbol.
+- Context names inside strings keep their prefix (`Names["OEIS`TopSpin*"]`, `NameQ["OEIS`n"]`): they are the checks that nothing leaks into `OEIS``.
 - Ordinary short names (`n`, `k`, `p`) are fine in tests: they land in `Global``, which only causes trouble when a package leaks the same name into `OEIS``.
+- The docs follow the same rule: examples `Get` the package and then use short public names, and only private helpers are written `OEIS`Private`helper`. The PostToolUse hook `.claude/hooks/wolfram-short-public-names.js` flags `OEIS`Name` outside strings and comments after an edit to a `.wlt` file, a `docs/` page or a README.
 
 ## Running Wolfram code
 
