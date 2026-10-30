@@ -20,7 +20,7 @@ VerificationTest[
 (* The first 24 terms of the OEIS DATA section *)
 
 VerificationTest[
-  OEIS`A401118 /@ Range[24],
+  A401118 /@ Range[24],
   {1, 2, 3, 4, 5, 5, 6, 7, 8, 9, 10, 10, 11, 12, 12, 13, 14, 15, 16, 16, 17, 18, 19, 19},
   TestID -> "oeis-data-1-24"
 ]
@@ -32,7 +32,7 @@ VerificationTest[
     pure[n_] := SelectFirst[Range[n, 1, -1],
       AnyTrue[Subsets[Range[n], {#}],
         NoneTrue[Subsets[#, {3}], Equal @@ LCM @@@ Subsets[#, {2}] &] &] &, 0];
-    OEIS`A401118 /@ Range[16] === pure /@ Range[16]],
+    A401118 /@ Range[16] === pure /@ Range[16]],
   True,
   TestID -> "vs-definition"
 ]
@@ -66,8 +66,8 @@ VerificationTest[
   TestID -> "example-triangles"
 ]
 
-VerificationTest[OEIS`A401118[6], 5, TestID -> "example-a6"]
-VerificationTest[OEIS`A401118[12], 10, TestID -> "example-a12"]
+VerificationTest[A401118[6], 5, TestID -> "example-a6"]
+VerificationTest[A401118[12], 10, TestID -> "example-a12"]
 
 (* {2, 5, 10} and {3, 4, 12} are disjoint LCM triangles in {1..12}, so at least two elements must go;
    removing 2 and 4 leaves no triangle *)

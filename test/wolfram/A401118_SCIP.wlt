@@ -18,7 +18,7 @@ VerificationTest[
   TestID -> "only-A401118SCIP-public"
 ]
 
-VerificationTest[Options[OEIS`A401118SCIP], {Method -> Automatic}, TestID -> "method-option"]
+VerificationTest[Options[A401118SCIP], {Method -> Automatic}, TestID -> "method-option"]
 
 
 (* Examples from docs/A401118_SCIP.md *)
@@ -26,14 +26,14 @@ VerificationTest[Options[OEIS`A401118SCIP], {Method -> Automatic}, TestID -> "me
 VerificationTest[OEIS`Private`a401118SCIPCliques[6], {{2, 3, 6}}, TestID -> "example-cliques-6"]
 
 VerificationTest[
-  {OEIS`A401118SCIP[12], OEIS`A401118SCIP[12, Method -> "LinearOptimization"]},
+  {A401118SCIP[12], A401118SCIP[12, Method -> "LinearOptimization"]},
   {10, 10},
   TestID -> "example-a12"
 ]
 
 VerificationTest[
-  Module[{s = OEIS`A401118SCIP[12, "Subset", Method -> "LinearOptimization"]},
-    {OEIS`A401118SCIP[12, "Size"], Length[s], SubsetQ[Range[12], s],
+  Module[{s = A401118SCIP[12, "Subset", Method -> "LinearOptimization"]},
+    {A401118SCIP[12, "Size"], Length[s], SubsetQ[Range[12], s],
      NoneTrue[Subsets[s, {3}], Equal @@ LCM @@@ Subsets[#, {2}] &]}],
   {10, 10, True, True},
   TestID -> "example-subset-12"
@@ -44,7 +44,7 @@ VerificationTest[
 
 VerificationTest[
   Module[{data = {1, 2, 3, 4, 5, 5, 6, 7, 8, 9, 10, 10, 11, 12, 12, 13, 14, 15, 16}},
-    {OEIS`A401118SCIP /@ Range[19], OEIS`A401118SCIP[#, Method -> "LinearOptimization"] & /@ Range[19]} === {data, data}],
+    {A401118SCIP /@ Range[19], A401118SCIP[#, Method -> "LinearOptimization"] & /@ Range[19]} === {data, data}],
   True,
   TestID -> "oeis-data-19"
 ]
@@ -80,7 +80,7 @@ VerificationTest[
 VerificationTest[
   Map[
     Function[s, {Length[s], NoneTrue[Subsets[s, {3}], Equal @@ LCM @@@ Subsets[#, {2}] &]}],
-    {OEIS`A401118SCIP[19, "Subset"], OEIS`A401118SCIP[19, "Subset", Method -> "LinearOptimization"]}],
+    {A401118SCIP[19, "Subset"], A401118SCIP[19, "Subset", Method -> "LinearOptimization"]}],
   {{16, True}, {16, True}},
   TestID -> "subset-valid-19"
 ]
@@ -101,9 +101,9 @@ VerificationTest[
 
 VerificationTest[
   Block[{OEIS`Private`a401118SCIPFunction = ($Failed &)},
-    {OEIS`A401118SCIP[19], OEIS`A401118SCIP[19, Method -> "SCIP"]}],
+    {A401118SCIP[19], A401118SCIP[19, Method -> "SCIP"]}],
   {16, $Failed},
-  {OEIS`A401118SCIP::noscip},
+  {A401118SCIP::noscip},
   TestID -> "no-scip-fallback"
 ]
 
@@ -112,12 +112,12 @@ VerificationTest[
 
 VerificationTest[
   If[OEIS`Private`a401118SCIPFunction[] === $Failed, True,
-    Module[{s = OEIS`A401118SCIP[150, "Subset", Method -> "SCIP"]},
-      (OEIS`A401118SCIP[#, Method -> "SCIP"] & /@ Range[73]) ===
+    Module[{s = A401118SCIP[150, "Subset", Method -> "SCIP"]},
+      (A401118SCIP[#, Method -> "SCIP"] & /@ Range[73]) ===
         {1, 2, 3, 4, 5, 5, 6, 7, 8, 9, 10, 10, 11, 12, 12, 13, 14, 15, 16, 16, 17, 18, 19, 19, 20, 21, 22, 23,
          24, 24, 25, 26, 27, 28, 28, 29, 30, 31, 32, 32, 33, 33, 34, 35, 35, 36, 37, 37, 38, 39, 40, 41, 42, 42,
          43, 43, 44, 45, 46, 46, 47, 48, 48, 49, 50, 50, 51, 52, 53, 53, 54, 54, 55} &&
-       (OEIS`A401118SCIP[#, Method -> "SCIP"] & /@ {100, 150, 200}) === {76, 111, 146} &&
+       (A401118SCIP[#, Method -> "SCIP"] & /@ {100, 150, 200}) === {76, 111, 146} &&
        Length[s] == 111 && NoneTrue[Subsets[s, {3}], Equal @@ LCM @@@ Subsets[#, {2}] &]]],
   True,
   TestID -> "scip-if-built"
@@ -126,8 +126,8 @@ VerificationTest[
 
 (* Invalid arguments *)
 
-VerificationTest[OEIS`A401118SCIP[12, Method -> "Gurobi"], $Failed, {OEIS`A401118SCIP::method}, TestID -> "message-method"]
-VerificationTest[OEIS`A401118SCIP[12, "Triangles"], $Failed, {OEIS`A401118SCIP::prop}, TestID -> "message-prop"]
-VerificationTest[OEIS`A401118SCIP[-3, "Subset"], $Failed, {OEIS`A401118SCIP::posint}, TestID -> "message-posint-subset"]
-VerificationTest[OEIS`A401118SCIP[0], $Failed, {OEIS`A401118SCIP::posint}, TestID -> "message-posint"]
-VerificationTest[OEIS`A401118SCIP[2.5, Method -> "SCIP"], $Failed, {OEIS`A401118SCIP::posint}, TestID -> "message-posint-with-method"]
+VerificationTest[A401118SCIP[12, Method -> "Gurobi"], $Failed, {A401118SCIP::method}, TestID -> "message-method"]
+VerificationTest[A401118SCIP[12, "Triangles"], $Failed, {A401118SCIP::prop}, TestID -> "message-prop"]
+VerificationTest[A401118SCIP[-3, "Subset"], $Failed, {A401118SCIP::posint}, TestID -> "message-posint-subset"]
+VerificationTest[A401118SCIP[0], $Failed, {A401118SCIP::posint}, TestID -> "message-posint"]
+VerificationTest[A401118SCIP[2.5, Method -> "SCIP"], $Failed, {A401118SCIP::posint}, TestID -> "message-posint-with-method"]
