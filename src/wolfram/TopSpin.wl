@@ -2,8 +2,8 @@
 
 BeginPackage["OEIS`"];
 
-TopSpinSolve::usage = "TopSpinSolve[state] returns a list of R, L and F move strings that solves a permutation of Range[20] in fixed positions. The solution is not necessarily shortest.";
-TopSpinApply::usage = "TopSpinApply[state, moves] executes R, L and F move strings from left to right. R rotates right, L rotates left, and F reverses positions 1 through 4.";
+TopSpinSolve::usage = "TopSpinSolve[state] returns a list of R, L and F move strings that solves a permutation of Range[20] in fixed positions. The solution is not necessarily shortest. With \"CompressRotations\" -> True, each run of rotations is one step, written Rk or Lk for k positions (R or L for one).";
+TopSpinApply::usage = "TopSpinApply[state, moves] executes R, L and F move strings from left to right. R rotates right, L rotates left, and F reverses positions 1 through 4. Rk and Lk rotate k positions.";
 
 Begin["`Private`"];
 
@@ -11,14 +11,17 @@ Begin["`Private`"];
 (* States and moves *)
 
 topSpinStateQ[state_] := ListQ[state] && Sort[state] === Range[20];
-topSpinMovesQ[moves_] := ListQ[moves] && AllTrue[moves, StringQ[#] && MemberQ[{"R", "L", "F"}, #] &];
+topSpinMovesQ[moves_] := ListQ[moves] && AllTrue[moves, StringQ[#] && StringMatchQ[#, RegularExpression["F|[RL]([1-9][0-9]*)?"]] &];
 
 topSpinStep[state_, "R"] := RotateRight[state];
 topSpinStep[state_, "L"] := RotateLeft[state];
 topSpinStep[state_, "F"] := Join[Reverse[Take[state, 4]], Drop[state, 4]];
+topSpinStep[state_, move_String] := With[{k = Mod[FromDigits[StringDrop[move, 1]], 20]},
+  If[StringStartsQ[move, "R"], RotateRight[state, k], RotateLeft[state, k]]
+];
 
 TopSpinApply::state = "The state must be a list containing each exact integer from 1 through 20 once.";
-TopSpinApply::moves = "The moves must be a list containing only the strings R, L and F.";
+TopSpinApply::moves = "The moves must be a list containing only the strings R, L and F, and Rk and Lk for a positive integer k.";
 TopSpinSolve::state = TopSpinApply::state;
 
 TopSpinApply[state_, moves_] := Module[{},
@@ -31,7 +34,7 @@ TopSpinApply[state_, moves_] := Module[{},
 (* Normal form *)
 
 (* ::Text:: *)
-(* R generates a cyclic group of order 20 and F one of order 2, so every word is R^r0 F R^r1 F ... F R^rk. topSpinAmounts gives the rotation amounts r0, ..., rk mod 20. A word is reduced when no inner amount is 0 (an F F pair with nothing between cancels). topSpinConcat appends a word to a reduced one, cancelling F pairs as long as the amount at the junction is 0, and topSpinMoves writes r as R^r for r <= 10 and as L^(20 - r) otherwise. *)
+(* R generates a cyclic group of order 20 and F one of order 2, so every word is R^r0 F R^r1 F ... F R^rk. topSpinAmounts gives the rotation amounts r0, ..., rk mod 20. A word is reduced when no inner amount is 0 (an F F pair with nothing between cancels). topSpinConcat appends a word to a reduced one, cancelling F pairs as long as the amount at the junction is 0, and topSpinMoves writes r as R^r for r <= 10 and as L^(20 - r) otherwise. topSpinSteps writes each nonzero r as one step instead: Rr (R for 1) for r <= 10, and Lk (L for 1) with k = 20 - r otherwise. *)
 
 topSpinAmounts[word_String] := Mod[StringCount[#, "R"] - StringCount[#, "L"], 20] & /@ StringSplit[word, "F", All];
 
@@ -48,6 +51,9 @@ topSpinReduce[word_String] := With[{a = topSpinAmounts[word]},
 ];
 
 topSpinMoves[a_] := Flatten[Riffle[If[# <= 10, ConstantArray["R", #], ConstantArray["L", 20 - #]] & /@ a, "F"]];
+
+topSpinRun[r_] := Which[r == 0, "", r == 1, "R", r <= 10, "R" <> IntegerString[r], r == 19, "L", True, "L" <> IntegerString[20 - r]];
+topSpinSteps[a_] := DeleteCases[Riffle[topSpinRun /@ a, "F"], ""];
 
 (* ::Subsection:: *)
 (* Word table *)
@@ -115,17 +121,23 @@ topSpinInverse = Map[InversePermutation[Fold[topSpinStep, Range[20], Characters[
 (* Solving *)
 
 (* ::Text:: *)
-(* Applying a word w to a state s gives s[[p]] for an index list p, and the solved state needs p = Ordering[s]. At base position b, x[[b]] = k says which entry of row 21 - b to use. Its word goes on the solution, and x becomes its inverse index list composed with x, which fixes b. After 19 rows x is the identity. *)
+(* Applying a word w to a state s gives s[[p]] for an index list p, and the solved state needs p = Ordering[s]. At base position b, x[[b]] = k says which entry of row 21 - b to use. Its word goes on the solution, and x becomes its inverse index list composed with x, which fixes b. After 19 rows x is the identity. "CompressRotations" only changes how the reduced word is written out. *)
 
-TopSpinSolve[state_] := Module[{x, words = {}, b, k},
+Options[TopSpinSolve] = {"CompressRotations" -> False};
+
+TopSpinSolve[state_, opts : OptionsPattern[]] := Module[{x, words = {}, b, k,
+    unknown = FilterRules[{opts}, Except[Options[TopSpinSolve]]], compress},
   If[!topSpinStateQ[state], Message[TopSpinSolve::state]; Return[$Failed]];
+  If[unknown =!= {}, Message[TopSpinSolve::optx, First[First[unknown]], HoldForm[TopSpinSolve[state, opts]]]; Return[$Failed]];
+  compress = OptionValue["CompressRotations"];
+  If[!BooleanQ[compress], Message[TopSpinSolve::opttf, "CompressRotations", compress]; Return[$Failed]];
   x = Ordering[state];
   Do[
     b = 21 - i; k = x[[b]];
     If[k != b, AppendTo[words, topSpinWords[[i, k]]]; x = topSpinInverse[[i, k]][[x]]],
     {i, 19}
   ];
-  topSpinMoves[Fold[topSpinConcat, {0}, words]]
+  If[compress, topSpinSteps, topSpinMoves][Fold[topSpinConcat, {0}, words]]
 ];
 
 (* ::Subsection:: *)
