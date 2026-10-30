@@ -26,6 +26,7 @@ Explanations of the code in this repository are in [`docs/`](docs/README.md).
 
 ### Functions
 
+- [TopSpin solver](docs/TopSpin.md): `src/wolfram/TopSpin.wl`, a sequence of rotations and flips for any 20-token position (about 180 moves on average, in about 0.4 ms), sifted through a stored Minkwitz table of short words without enumerating the states.
 - [Carry-less (dismal) arithmetic in Java](docs/CarrylessArithmetic.md): `src/java/CarrylessArithmetic.java`, its methods, and how to call it from Java and from Mathematica via J/Link. See also the [Numberphile video](https://www.youtube.com/watch?v=cZkGeR9CWbk) on dismal arithmetic.
 - [DivisorSigmaInverse](docs/DivisorSigmaInverse.md): `src/wolfram/DivisorSigmaInverse.wl`, a Mathematica port of `invsigmaDiv` from Max Alekseyev's `invphi.gp`; `invSigmaDivisors[n, k]` lists every $x$ with $\sigma_k(x)$ equal to each divisor of $n$, `DivisorSigmaInverse[n, k]` gives the solutions for $n$ itself, and `DivisorSigmaInverseCount[n, k]` counts them.
 - [Bulgarian solitaire](docs/BulgarianSolitaire.md): `src/wolfram/BulgarianSolitaire.wl`, the solitaire move on partitions with orbits, cycles and their count, Garden of Eden partitions, game-tree level sizes, and the row-to-column game.
