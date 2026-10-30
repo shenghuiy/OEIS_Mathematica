@@ -71,6 +71,49 @@ VerificationTest[
   TestID -> "solve-random-permutations-independent-replay"
 ]
 
+VerificationTest[
+  OEIS`TopSpinSolve /@ {Join[{4, 3, 2, 1}, Range[5, 20]], RotateRight[Range[20], 7], Join[{3, 2, 1, 20}, Range[4, 19]]},
+  {{"F"}, ConstantArray["L", 7], {"F", "L"}},
+  TestID -> "solve-short-scrambles"
+]
+
+VerificationTest[
+  Length /@ OEIS`TopSpinSolve /@ {Reverse[Range[20]], ReplacePart[Range[20], {19 -> 20, 20 -> 19}]},
+  {190, 69},
+  TestID -> "solve-word-lengths"
+]
+
+VerificationTest[
+  Module[{reducedQ = StringFreeQ[#, "RL" | "LR" | "FF" | StringRepeat["R", 11] | StringRepeat["L", 11]] &},
+    AllTrue[Flatten[OEIS`Private`topSpinTable], reducedQ] &&
+    BlockRandom[
+      SeedRandom[20261030];
+      AllTrue[Table[RandomSample[Range[20]], {10}], reducedQ[StringJoin[OEIS`TopSpinSolve[#]]] &]
+    ]
+  ],
+  True,
+  TestID -> "table-and-solutions-reduced"
+]
+
+VerificationTest[Length /@ OEIS`Private`topSpinTable, Range[19, 1, -1], TestID -> "table-shape"]
+
+VerificationTest[
+  And @@ Flatten[Table[
+    With[{
+        p = Fold[Function[{s, m}, Switch[m,
+          "R", RotateRight[s], "L", RotateLeft[s],
+          "F", Join[Reverse[s[[1 ;; 4]]], s[[5 ;; 20]]], _, $Failed
+        ]], Range[20], Characters[OEIS`Private`topSpinTable[[i, k]]]],
+        b = 21 - i
+      },
+      p[[b + 1 ;;]] === Range[b + 1, 20] && p[[b]] == k
+    ],
+    {i, 19}, {k, 20 - i}
+  ]],
+  True,
+  TestID -> "table-entries-independent-replay"
+]
+
 VerificationTest[OEIS`TopSpinSolve[Range[19]], $Failed, {OEIS`TopSpinSolve::state}, TestID -> "reject-short-state"]
 VerificationTest[OEIS`TopSpinSolve[ConstantArray[1, 20]], $Failed, {OEIS`TopSpinSolve::state}, TestID -> "reject-duplicate-state"]
 VerificationTest[OEIS`TopSpinSolve[ReplacePart[Range[20], 1 -> x]], $Failed, {OEIS`TopSpinSolve::state}, TestID -> "reject-symbolic-state"]
