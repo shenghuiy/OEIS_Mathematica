@@ -1,6 +1,6 @@
 # TopSpin solver
 
-[`src/wolfram/TopSpin.wl`](../src/wolfram/TopSpin.wl) finds a sequence of legal moves for any arrangement of the standard 20-token TopSpin puzzle. It sifts the position through a stored table of short words (Minkwitz's method). A solve takes about 0.4 ms and averages about 180 moves.
+[`src/wolfram/TopSpin.wl`](../src/wolfram/TopSpin.wl) finds a sequence of legal moves for any arrangement of the standard 20-token TopSpin puzzle. It sifts the position through a stored table of short words (Minkwitz's method). A solve takes about 0.4 ms and averages about 180 moves. With `Method -> "TwoPhase"` it calls a C library instead, Kociemba's two-phase method, whose solutions are less than half as long.
 
 ## Solve a position
 
@@ -40,6 +40,31 @@ TopSpinSolve[Join[{3, 2, 1, 20}, Range[4, 19]], "CompressRotations" -> True]
 A step is at most `"R10"` or `"L9"`, and two rotation steps are never next to each other, so the steps alternate between a rotation and `"F"`. The word is the same as without the option: only how rotations are written and counted changes. Over the 200 random positions in [Performance](#performance), solutions average 123.6 steps (longest 185) against 179.9 elementary moves, and about 61 of those steps are flips. The table was chosen for elementary length, not for steps, so these counts are not the fewest steps a table could give.
 
 Any other option, or a value other than `True` or `False`, gives a message and `$Failed`.
+
+### Two-phase solutions
+
+`Method -> "TwoPhase"` solves the position with the C library built from [`src/c/topspin_twophase`](../src/c/topspin_twophase), an implementation of Kociemba's two-phase method described on its own page, [TopSpin two-phase solver](TopSpinTwoPhase.md). Its solutions are much shorter than the table's, in steps and in elementary moves, and `"CompressRotations"` writes them either way:
+
+```wolfram
+state = ReplacePart[Range[20], {19 -> 20, 20 -> 19}];
+Length /@ {TopSpinSolve[state, "CompressRotations" -> True],
+  TopSpinSolve[state, Method -> "TwoPhase", "CompressRotations" -> True]}
+(* {65, 40} *)
+```
+
+The default, `Method -> "Table"` (or `Automatic`), is the stored table, which needs nothing outside the package.
+
+| `Method` | Search |
+|---|---|
+| `"TwoPhase"` | The first phase-1 length that has solutions. The moves are the same on every run and every number of threads. |
+| `{"TwoPhase", "PhaseOneLengths" -> k}` | The first `k` phase-1 lengths: longer, and as short or shorter. Also the same on every run. |
+| `{"TwoPhase", "TimeLimit" -> t}` | `t` seconds, or longer when no solution has turned up by then. The moves can differ from run to run. |
+
+Another value of `Method` gives a message and `$Failed`, and so does giving both `"TimeLimit"` and `"PhaseOneLengths"`. If the search finds nothing within its node budget (or 20 s past the time limit), `TopSpinSolve` gives `TopSpinSolve::tpnone` and returns the stored table's solution; none of the positions tried so far comes close to that.
+
+The library is built with CMake into `build/` at the repository root, as described in [Building](TopSpinTwoPhase.md#building). `TopSpinSolve` looks for `topspin_twophase.dll` (`.so`, `.dylib`) there, or in the directory named by the environment variable `TOPSPIN_TWOPHASE_LIB`. Without it, `Method -> "TwoPhase"` gives `TopSpinSolve::nolib` and returns `$Failed`. The first call in a session sets up about 1.7 GB of tables, which takes about 4 s. The very first call also builds the largest table, about 2 minutes on 16 threads, and saves it as `topspin_pairing.bin` (655 MB) next to the library. The library is looked for and set up once per session, so restart the kernel after building it.
+
+On 16 threads, `Method -> "TwoPhase"` solves a random position in about 25 ms, with the longest of the 200 in [Performance](#performance) taking 0.74 s. A single swap of two adjacent tokens is its hardest case, 4 to 8 s, for a 40-step solution.
 
 ## How it works
 
@@ -86,6 +111,9 @@ Over 200 random positions (`SeedRandom[1]; Table[RandomSample[Range[20]], {200}]
 |---|---|---|---|
 | `GroupElementToWord`, default options | 4.6 ms | 596.9 | 821 |
 | `TopSpinSolve` (stored table) | 0.40 ms | 179.9 | 261 |
+| `TopSpinSolve`, `Method -> "TwoPhase"` (16 threads) | 24 ms | 93.6 | 120 |
+
+With `"CompressRotations" -> True` the stored table averages 123.6 steps (longest 185) and `Method -> "TwoPhase"` 48.5 steps (longest 60). `{"TwoPhase", "PhaseOneLengths" -> 2}` gives 47.0 steps (longest 57) in 60 ms. [TopSpin two-phase solver](TopSpinTwoPhase.md#results) has the two-phase solver's results with other limits.
 
 The built-in `GroupElementToWord` also uses Minkwitz's method, but it rebuilds its stabilizer chain (about 4 ms) and its word table on every call. Sifting one position through the table takes only about 0.2 ms of that. More iterations shorten its words, but each call pays for them, since the table is rebuilt every time. On smaller samples, `MaxIterations -> 10^6` gave an average of 373 moves at 83 ms per call (20 positions), and `MaxIterations -> 5*10^6` with `Method -> {"Minkwitz", "InitMaxLength" -> 12}` gave 322 moves at 1.8 s per call (5 positions).
 
@@ -109,7 +137,9 @@ The generators are rotation and flip, in that order. A negative word entry denot
 TestReport["test/wolfram/TopSpin.wlt"]
 ```
 
-The 34 tests cover move semantics, exact orientation, an odd transposition, a noncommuting scramble, ten seeded arbitrary permutations, and invalid input (including bad options and `"R0"`). Independent list operations replay the noncommuting and random solutions. Three short scrambles must come back as their shortest solutions (`{"F"}`, seven `"L"`, and `{"F", "L"}`, or `{"F"}`, `{"L7"}` and `{"F", "L"}` compressed), and the reversed track and the odd transposition as words of 190 and 69 moves, or 148 and 65 compressed steps. Compressed solutions of the random permutations must be the runs of the elementary ones and replay with `TopSpinApply`, which must also execute `"R3"`, `"L12"` and `"R25"`. The table must have rows of 19 down to 1 words, every entry must leave the positions above its base alone and bring its token to the base (replayed independently), and the table and the solutions must be reduced. The tests also check public symbol names. Rebuilding the table is not in the tests, since it takes about 90 s.
+The 44 tests cover move semantics, exact orientation, an odd transposition, a noncommuting scramble, ten seeded arbitrary permutations, and invalid input (including bad options, bad `Method` values and `"R0"`). Independent list operations replay the noncommuting and random solutions. Three short scrambles must come back as their shortest solutions (`{"F"}`, seven `"L"`, and `{"F", "L"}`, or `{"F"}`, `{"L7"}` and `{"F", "L"}` compressed), and the reversed track and the odd transposition as words of 190 and 69 moves, or 148 and 65 compressed steps. Compressed solutions of the random permutations must be the runs of the elementary ones and replay with `TopSpinApply`, which must also execute `"R3"`, `"L12"` and `"R25"`. The table must have rows of 19 down to 1 words, every entry must leave the positions above its base alone and bring its token to the base (replayed independently), and the table and the solutions must be reduced. The tests also check public symbol names. Rebuilding the table is not in the tests, since it takes about 90 s.
+
+`Method -> "Table"` and `Automatic` must give the default's moves, and `Method -> "TwoPhase"` without the library must give `TopSpinSolve::nolib`, and with a library that finds nothing, `TopSpinSolve::tpnone` and the table's moves. The other two-phase tests pass trivially when the library is not built. With it, the short scrambles must come back as the same shortest solutions, the ten seeded permutations as solutions of 38, 50, 52, 50, 47, 51, 35, 41, 51 and 48 steps (reduced, replayed independently, and compressed as the runs of the elementary moves), and the reversed track and the odd transposition in 41 and 40 steps. `"PhaseOneLengths" -> 2` must give solutions no longer than the default, and `"TimeLimit" -> 0.2` valid ones. With the library, the file takes about 15 s, or about 2 minutes more the first time.
 
 ## References
 

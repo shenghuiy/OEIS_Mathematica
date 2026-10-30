@@ -1,5 +1,5 @@
-/* A two-phase (Kociemba-style) solver for the 20-token TopSpin puzzle, a prototype for
-   TopSpinSolve in src/wolfram/TopSpin.wl.  See docs/TopSpinTwoPhase.md.
+/* A two-phase (Kociemba-style) solver for the 20-token TopSpin puzzle, behind
+   TopSpinSolve[state, Method -> "TwoPhase"] in src/wolfram/TopSpin.wl.  See docs/TopSpinTwoPhase.md.
 
    States and moves.  s[P] is the label (0..19) in position P (0..19), and the solved state is
    s[P] = P.  Move m = 0 is F, which reverses positions 0..3; m = 1..19 is R^m, which rotates the
@@ -21,15 +21,15 @@
    a word, where the next move is a rotation or the word stops.  IDA* searches A states two steps
    at a time (a rotation, then F), with three lower bounds:
      - the coloring alone (184,756 colorings, a 2^20-byte table indexed by the color-1 mask),
-     - the matching alone (a 654,729,075-byte table, built in about 2 minutes on 16 threads and
-       cached in a file),
+     - the matching with one more bit, the parity below (2 * 654,729,075 entries of 4 bits,
+       built in about 2 minutes on 16 threads and cached in a file),
      - the exact distance of every coset within 16 steps of the goal (45,780,118 cosets in a
        2^27-entry hash table, built in about 3 s); a coset outside it is at least 18 away.
    Like Kociemba's solver, the search does not stop at the shortest phase 1: for each phase-1
    length it finds every phase-1 solution of exactly that length and completes it with phase 2
    by table lookup, and it goes on to longer phase 1 until the time runs out or the phase-1
-   length reaches the best total.  It can also solve the inverse and the mirror image of the
-   position, interleaving their bounds, and keep the best of the four. */
+   length reaches the best total.  It can also solve variants of the position (relabeled, the
+   inverse, the mirror image), interleaving their bounds, and keep the best. */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -81,7 +81,7 @@ static double nowMs(void) {
 #define INF 1000
 #define MAXTASK 20000
 
-static uint8_t *D2, *E2, *colA, *matA;
+static uint8_t *D2, *E2, *colA;
 static uint64_t *ball;
 static const uint64_t ballCap = 1ull << BALL_BITS;
 static long long ballCount;
@@ -213,7 +213,7 @@ static void buildColor(void) {
   free(colB);
 }
 
-/* ---------- Phase 1 bound: the matching ---------- */
+/* ---------- Phase 1 bound: the matching and its parity ---------- */
 
 /* partner[P] is the position matched with P.  The rank takes the lowest unmatched position in
    turn; its digit is the partner's place among the positions still unmatched (19 * 17 * ... * 1). */
@@ -245,30 +245,123 @@ static void mmove(const uint8_t *a, uint8_t *b, int m) {
   for (int p = 0; p < 20; p++) b[pm[m][p]] = pm[m][a[p]];
 }
 
-/* A distances only (even): an A state x is 2 + the least distance of F R^r x, r = 1..19. */
-static void buildMatch(void) {
-  uint8_t a[20];
-  memset(matA, 255, MSIZE);
+/* The parity of a state is the number of label pairs whose odd label is in the lower of their two
+   positions, mod 2.  Relabeling by H keeps it, so the matching with its parity is a coarser coset
+   (of the subgroup of pair permutations that reverse an even number of pairs): 2 * 654,729,075 of
+   them.  A move changes the parity once for each matched pair whose positions it puts in the other
+   order, which mmoveP returns.  The goals are (the matching of H, parity 0) and (the matching of
+   H R, parity 1).  Swapping the two tokens of one pair gives (the matching of H, parity 1), which
+   is 36 steps away, while its matching alone is the goal's. */
+
+static int mmoveP(const uint8_t *a, uint8_t *b, int m) {
+  int flips = 0;
+  for (int p = 0; p < 20; p++) {
+    b[pm[m][p]] = pm[m][a[p]];
+    if (p < a[p] && pm[m][p] > pm[m][a[p]]) flips ^= 1;
+  }
+  return flips;
+}
+
+/* Half the A distance, 4 bits for each (matching, parity), with both parities of a matching in one
+   byte.  15 stands for 30 or more; the 4,010 entries above 30 are in a sorted list. */
+static uint8_t *pairT, *pairExcVal;
+static uint64_t *pairExcKey;
+static int nPairExc;
+
+static int pairDist(int mr, int par) {
+  int v = (pairT[mr] >> (4 * par)) & 15, lo = 0, hi = nPairExc - 1;
+  uint64_t key = 2 * (uint64_t)mr + par;
+  if (v < 15) return 2 * v;
+  while (lo <= hi) {
+    int mid = (lo + hi) / 2;
+    if (pairExcKey[mid] == key) return pairExcVal[mid];
+    if (pairExcKey[mid] < key) lo = mid + 1; else hi = mid - 1;
+  }
+  return 30;
+}
+
+/* An A state x is 2 + the least distance of F R^r x, r = 1..19.  The layers are found forward,
+   from the predecessors of the last layer, until half the states are reached, and then backward:
+   an unreached state joins layer d + 2 when one of its 19 successors is in layer d.  Returns 0
+   when memory runs out. */
+static int buildPairing(void) {
+  const long long total = 2ll * MSIZE;
+  uint8_t *T = malloc(total), a[20];
+  long long reached = 2, r;
+  if (!T) return 0;
+  memset(T, 255, total);
   for (int j = 0; j < 10; j++) { a[2 * j] = (uint8_t)(2 * j + 1); a[2 * j + 1] = (uint8_t)(2 * j); }
-  matA[mrank(a)] = 0;
+  T[2ll * mrank(a)] = 0;
   for (int j = 0; j < 10; j++) { int p = 2 * j + 1, q = (2 * j + 2) % 20; a[p] = (uint8_t)q; a[q] = (uint8_t)p; }
-  matA[mrank(a)] = 0;
+  T[2ll * mrank(a) + 1] = 0;
   for (int d = 0;; d += 2) {
     long long cnt = 0;
-    int r;
+    if (reached < total / 2) {
 #pragma omp parallel for reduction(+:cnt) schedule(dynamic, 65536)
-    for (r = 0; r < MSIZE; r++) if (matA[r] == d) {
-      uint8_t y[20], z[20], x[20];
-      munrank(r, y);
-      mmove(y, z, 0);
-      for (int rot = 1; rot < 20; rot++) {
-        mmove(z, x, 20 - rot);
-        int rr = mrank(x);
-        if (matA[rr] == 255) { matA[rr] = (uint8_t)(d + 2); cnt++; }
+      for (r = 0; r < total; r++) if (T[r] == d) {
+        uint8_t y[20], z[20], x[20];
+        munrank((int)(r >> 1), y);
+        int par = (int)(r & 1) ^ mmoveP(y, z, 0);
+        for (int rot = 1; rot < 20; rot++) {
+          int px = par ^ mmoveP(z, x, 20 - rot);
+          long long rr = 2ll * mrank(x) + px;
+          if (T[rr] == 255) { T[rr] = (uint8_t)(d + 2); cnt++; }
+        }
+      }
+    } else {
+#pragma omp parallel for reduction(+:cnt) schedule(dynamic, 65536)
+      for (r = 0; r < total; r++) if (T[r] == 255) {
+        uint8_t x[20], z[20], y[20];
+        munrank((int)(r >> 1), x);
+        for (int rot = 1; rot < 20; rot++) {
+          int pz = (int)(r & 1) ^ mmoveP(x, z, rot);
+          int py = pz ^ mmoveP(z, y, 0);
+          if (T[2ll * mrank(y) + py] == d) { T[r] = (uint8_t)(d + 2); cnt++; break; }
+        }
       }
     }
     if (!cnt) break;
+    reached += cnt;
   }
+  nPairExc = 0;
+  for (r = 0; r < total; r++) if (T[r] > 30) nPairExc++;
+  pairExcKey = malloc((nPairExc + 1) * sizeof(uint64_t)); pairExcVal = malloc(nPairExc + 1);
+  if (!pairExcKey || !pairExcVal) { free(T); return 0; }
+  nPairExc = 0;
+  for (r = 0; r < total; r++) if (T[r] > 30) { pairExcKey[nPairExc] = (uint64_t)r; pairExcVal[nPairExc++] = T[r]; }
+  for (r = 0; r < MSIZE; r++) {
+    int lo = T[2 * r] > 30 ? 15 : T[2 * r] / 2, hi = T[2 * r + 1] > 30 ? 15 : T[2 * r + 1] / 2;
+    pairT[r] = (uint8_t)(lo | (hi << 4));
+  }
+  free(T);
+  return 1;
+}
+
+/* The cache file holds pairT, then the number of entries above 30, their keys and their values. */
+static int readPairing(const char *name) {
+  FILE *f = fopen(name, "rb");
+  int ok = 0;
+  if (!f) return 0;
+  if (fread(pairT, 1, MSIZE, f) == MSIZE && fread(&nPairExc, sizeof nPairExc, 1, f) == 1 &&
+      nPairExc >= 0 && nPairExc < 1000000) {
+    pairExcKey = malloc((nPairExc + 1) * sizeof(uint64_t)); pairExcVal = malloc(nPairExc + 1);
+    ok = pairExcKey && pairExcVal &&
+         fread(pairExcKey, sizeof(uint64_t), nPairExc, f) == (size_t)nPairExc &&
+         fread(pairExcVal, 1, nPairExc, f) == (size_t)nPairExc && fgetc(f) == EOF;
+  }
+  fclose(f);
+  if (!ok) { free(pairExcKey); free(pairExcVal); pairExcKey = NULL; pairExcVal = NULL; }
+  return ok;
+}
+
+static void writePairing(const char *name) {
+  FILE *f = fopen(name, "wb");
+  if (!f) return;
+  fwrite(pairT, 1, MSIZE, f);
+  fwrite(&nPairExc, sizeof nPairExc, 1, f);
+  fwrite(pairExcKey, sizeof(uint64_t), nPairExc, f);
+  fwrite(pairExcVal, 1, nPairExc, f);
+  fclose(f);
 }
 
 /* ---------- Phase 1 bound: exact distances near the goal ---------- */
@@ -362,6 +455,11 @@ static int buildBall(void) {
 
 /* ---------- Phase 1 search ---------- */
 
+/* Node budgets of the reproducible search (limitMs < 0): per phase-1 length and variant, shared
+   equally by the tasks, and in all before a first solution. */
+#define BOUND_BUDGET 100000000LL
+#define TOTAL_BUDGET 400000000LL
+
 static int bound1;
 static volatile int timeUp, haveSol;
 static double deadline;
@@ -369,7 +467,8 @@ static long long statNodes, statSols;
 
 typedef struct {
   int path[64], bestPath[64], bestSteps, bestElem, bestLen1, bestRot;
-  long long nodes, nsol;
+  long long nodes, nsol, taskNodes, budget;
+  int stop;
 } Ctx;
 
 static int mrankPos(const uint8_t *pos) {
@@ -384,12 +483,19 @@ static uint32_t maskPos(const uint8_t *pos) {
   return mask;
 }
 
+static int parPos(const uint8_t *pos) {
+  int par = 0;
+  for (int k = 0; k < 10; k++) par ^= pos[2 * k + 1] < pos[2 * k];
+  return par;
+}
+
 /* Lower bound for an A state: exact inside the ball, else the larger table value, at least 18. */
 static int hA1(const uint8_t *pos) {
-  int mr = mrankPos(pos), d = ballGet(cosetKey(mr, maskPos(pos)));
+  int mr = mrankPos(pos), d = ballGet(cosetKey(mr, maskPos(pos))), m;
   if (d >= 0) return d;
   int h = colA[maskPos(pos)];
-  if (matA[mr] > h) h = matA[mr];
+  m = pairDist(mr, parPos(pos));
+  if (m > h) h = m;
   if (h < BALL_RADIUS + 2) h = BALL_RADIUS + 2;
   return h;
 }
@@ -425,7 +531,8 @@ static void dfsA(Ctx *c, const uint8_t *pos, int g, int elem1) {
     double tn = nowMs();
     if ((haveSol && tn > deadline) || tn > deadline + 20000) timeUp = 1;
   }
-  if (timeUp) return;
+  if (c->budget && ++c->taskNodes > c->budget) c->stop = 1;
+  if (timeUp || c->stop) return;
   if (g == bound1) { evaluate(c, pos, g, elem1); return; }
   int rem = bound1 - g - 2;
   if (rem < 0) return;
@@ -445,12 +552,11 @@ static void dfsA(Ctx *c, const uint8_t *pos, int g, int elem1) {
       const uint8_t *t = pmRF[rotOrder[i]];
       for (int l = 0; l < 20; l++) np[i][l] = t[pos[l]];
       mr[i] = mrankPos(np[i]);
-      PREFETCH(&matA[mr[i]]);
+      PREFETCH(&pairT[mr[i]]);
     }
     for (int i = 0; i < 19; i++) {
-      int h = colA[maskPos(np[i])];
-      if (matA[mr[i]] > h) h = matA[mr[i]];
-      hv[i] = h;
+      int h = colA[maskPos(np[i])], m = pairDist(mr[i], parPos(np[i]));
+      hv[i] = m > h ? m : h;
     }
   }
   for (int i = 0; i < 19; i++) {
@@ -466,6 +572,7 @@ static void dfsA(Ctx *c, const uint8_t *pos, int g, int elem1) {
 typedef struct {
   uint8_t pos[20]; int g, elem1, path[16];
   int bestSteps, bestElem, bestLen1, bestRot, bestPath[64];
+  long long nodes;
 } Task;
 
 static Task *tasks, *nx;
@@ -473,7 +580,9 @@ static Ctx *ctxs;
 
 typedef struct { int steps, elem, variant, len1, rot, path[64]; } Best;
 
-static void searchBound(const uint8_t *pos0, int variant, Best *best) {
+/* With a budget, each task stops after its share of it, so the result does not depend on the
+   threads; returns the nodes searched. */
+static long long searchBound(const uint8_t *pos0, int variant, Best *best, long long budget) {
   int n = 0, k;
   if (bound1 % 2 == 0) {
     if (hA1(pos0) <= bound1) { memcpy(tasks[0].pos, pos0, 20); tasks[0].g = 0; tasks[0].elem1 = 0; n = 1; }
@@ -500,13 +609,16 @@ static void searchBound(const uint8_t *pos0, int variant, Best *best) {
     }
     memcpy(tasks, nx, m * sizeof(Task)); n = m;
   }
+  long long share = budget > 0 && n > 0 ? (budget + n - 1) / n : 0, used = 0;
 #pragma omp parallel for schedule(dynamic, 1) num_threads(nThreads)
   for (k = 0; k < n; k++) {
     Ctx *c = &ctxs[omp_get_thread_num()];
     Task *t = &tasks[k];
     c->bestSteps = INF; c->bestElem = INF;
+    c->budget = share; c->taskNodes = 0; c->stop = 0;
     memcpy(c->path, t->path, t->g * sizeof(int));
     dfsA(c, t->pos, t->g, t->elem1);
+    t->nodes = c->taskNodes;
     t->bestSteps = c->bestSteps; t->bestElem = c->bestElem;
     if (c->bestSteps < INF) {
       t->bestLen1 = c->bestLen1; t->bestRot = c->bestRot;
@@ -515,114 +627,48 @@ static void searchBound(const uint8_t *pos0, int variant, Best *best) {
   }
   for (k = 0; k < n; k++) {
     Task *t = &tasks[k];
+    used += t->nodes;
     if (t->bestSteps < best->steps || (t->bestSteps == best->steps && t->bestElem < best->elem)) {
       best->steps = t->bestSteps; best->elem = t->bestElem; best->variant = variant;
       best->len1 = t->bestLen1; best->rot = t->bestRot;
       memcpy(best->path, t->bestPath, t->bestLen1 * sizeof(int));
     }
   }
+  return used;
 }
 
-/* Variant 1 is the inverse position: its solution, reversed with R^r -> R^(20 - r), solves the
-   position.  Variant 2 is the mirror image under P -> 3 - P (mod 20), which fixes F and turns
-   R^r into R^(20 - r).  Variant 3 is the mirror image of the inverse. */
+/* Variants, by bit: 1 relabels every token l as l + 1 (mod 20), which pairs the tokens 20 and 1,
+   2 and 3, ... instead, so phase 1 sees a different coset; its solution followed by R^19 solves
+   the position.  2 is the inverse position: its solution, reversed with R^r -> R^(20 - r), solves
+   the position.  4 is the mirror image under P -> 3 - P (mod 20), which fixes F and turns R^r
+   into R^(20 - r). */
 static void variantState(const uint8_t *s0, int v, uint8_t *s) {
-  uint8_t a[20];
-  if (v & 1) for (int p = 0; p < 20; p++) a[s0[p]] = (uint8_t)p; else memcpy(a, s0, 20);
-  if (v & 2) for (int p = 0; p < 20; p++) s[p] = (uint8_t)((23 - a[(23 - p) % 20]) % 20); else memcpy(s, a, 20);
+  uint8_t a[20], b[20];
+  if (v & 2) for (int p = 0; p < 20; p++) a[s0[p]] = (uint8_t)p; else memcpy(a, s0, 20);
+  if (v & 4) for (int p = 0; p < 20; p++) b[p] = (uint8_t)((23 - a[(23 - p) % 20]) % 20); else memcpy(b, a, 20);
+  for (int p = 0; p < 20; p++) s[p] = (uint8_t)((v & 1) ? (b[p] + 1) % 20 : b[p]);
 }
 
-static void variantWord(int v, int *w, int n) {
-  if (v & 2) for (int i = 0; i < n; i++) if (w[i]) w[i] = 20 - w[i];
+static int variantWord(int v, int *w, int n) {
   if (v & 1) {
+    if (n > 0 && w[n - 1] != 0) { int r = (w[n - 1] + 19) % 20; if (r) w[n - 1] = r; else n--; }
+    else w[n++] = 19;
+  }
+  if (v & 4) for (int i = 0; i < n; i++) if (w[i]) w[i] = 20 - w[i];
+  if (v & 2) {
     for (int i = 0; i < n / 2; i++) { int x = w[i]; w[i] = w[n - 1 - i]; w[n - 1 - i] = x; }
     for (int i = 0; i < n; i++) if (w[i]) w[i] = 20 - w[i];
   }
+  return n;
 }
 
-/* ---------- Library interface ---------- */
-
-/* Builds the tables; matchingCache, if not NULL or empty, names a file that holds the matching
-   table (read when it exists, written after building it).  threads <= 0 uses every core.
-   Returns 0, or -1 when memory runs out. */
-TSTP_EXPORT int topspin_tp_init(const char *matchingCache, int threads) {
-  if (ready) return 0;
-  nThreads = threads > 0 ? threads : omp_get_max_threads();
-  if (nThreads > 256) nThreads = 256;
-  initMoves();
-  D2 = malloc(HSIZE); E2 = malloc(HSIZE); colA = malloc(1 << 20); matA = malloc(MSIZE);
-  ball = malloc(ballCap * sizeof(uint64_t));
-  tasks = malloc(MAXTASK * sizeof(Task)); nx = malloc(MAXTASK * sizeof(Task));
-  ctxs = malloc(256 * sizeof(Ctx));
-  if (!D2 || !E2 || !colA || !matA || !ball || !tasks || !nx || !ctxs) return -1;
-  buildPhase2();
-  buildColor();
-  int loaded = 0;
-  if (matchingCache && *matchingCache) {
-    FILE *f = fopen(matchingCache, "rb");
-    if (f) { loaded = fread(matA, 1, MSIZE, f) == MSIZE; fclose(f); }
-  }
-  if (!loaded) {
-    buildMatch();
-    if (matchingCache && *matchingCache) {
-      FILE *f = fopen(matchingCache, "wb");
-      if (f) { fwrite(matA, 1, MSIZE, f); fclose(f); }
-    }
-  }
-  if (!buildBall()) return -1;
-  ready = 1;
-  return 0;
-}
-
-TSTP_EXPORT void topspin_tp_free(void) {
-  free(D2); free(E2); free(colA); free(matA); free(ball); free(tasks); free(nx); free(ctxs);
-  D2 = E2 = colA = matA = NULL; ball = NULL; tasks = nx = NULL; ctxs = NULL;
-  ready = 0;
-}
-
-/* Solves state, given 1-based as TopSpinSolve takes it (state[P - 1] is the label in position P).
-   out gets the steps: 0 for F, r for R^r (r = 1..19).  limitMs >= 0 stops the search after that
-   many milliseconds, once some solution is known; limitMs = -k finishes the phase-1 length of the
-   first solution and k - 1 more lengths, however long that takes, which makes the answer
-   reproducible.  variants is 1 (the position) to 4 (also the inverse, the mirror image and the
-   mirror of the inverse).  Returns the number of steps, or -1 (not initialized), -2 (not a
-   permutation of 1..20), -3 (no solution within 20 s past the limit), -4 (out too short). */
-TSTP_EXPORT int topspin_tp_solve(const int *state, double limitMs, int variants, int *out, int outMax) {
-  uint8_t s0[20], pos[4][20], s[20], t[20];
-  int h0[4], lo = INF, firstBound = -1, n = 0, w[256], m = 0;
-  uint32_t seen = 0;
-  if (!ready) return -1;
-  for (int p = 0; p < 20; p++) {
-    if (state[p] < 1 || state[p] > 20 || ((seen >> (state[p] - 1)) & 1)) return -2;
-    seen |= 1u << (state[p] - 1);
-    s0[p] = (uint8_t)(state[p] - 1);
-  }
-  if (variants < 1) variants = 1;
-  if (variants > 4) variants = 4;
-  for (int i = 0; i < nThreads; i++) { ctxs[i].nodes = 0; ctxs[i].nsol = 0; }
-  timeUp = 0; haveSol = 0;
-  deadline = nowMs() + (limitMs >= 0 ? limitMs : 1e12);
-  Best best; best.steps = INF; best.elem = INF; best.variant = -1;
-  for (int v = 0; v < variants; v++) {
-    uint8_t y[20];
-    variantState(s0, v, s);
-    for (int p = 0; p < 20; p++) pos[v][s[p]] = (uint8_t)p;
-    for (int l = 0; l < 20; l++) y[l] = pm[0][pos[v][l]];
-    int a = hA1(pos[v]), b = 1 + hA1(y);
-    h0[v] = a < b ? a : b;
-    if (h0[v] < lo) lo = h0[v];
-  }
-  for (bound1 = lo; bound1 <= best.steps && bound1 < 60 && !timeUp; bound1++) {
-    if (limitMs < 0 && firstBound >= 0 && bound1 - firstBound >= -limitMs) break;
-    for (int v = 0; v < variants && !timeUp; v++) if (bound1 >= h0[v]) searchBound(pos[v], v, &best);
-    if (best.steps < INF && firstBound < 0) firstBound = bound1;
-  }
-  statNodes = 0; statSols = 0;
-  for (int i = 0; i < nThreads; i++) { statNodes += ctxs[i].nodes; statSols += ctxs[i].nsol; }
-  if (best.variant < 0) return -3;
-  for (int i = 0; i < best.len1; i++) w[n++] = best.path[i];
-  if (best.rot > 0) w[n++] = best.rot;
-  variantState(s0, best.variant, s);
+/* The word of a variant's best solution, turned back into a solution of s0; returns its length. */
+static int variantSolution(const uint8_t *s0, const Best *b, int *w) {
+  uint8_t s[20], t[20];
+  int n = 0, m = 0;
+  for (int i = 0; i < b->len1; i++) w[n++] = b->path[i];
+  if (b->rot > 0) w[n++] = b->rot;
+  variantState(s0, b->variant, s);
   for (int i = 0; i < n; i++) { applyS(s, t, w[i]); memcpy(s, t, 20); }
   for (;;) {
     int i = hrank(s), d = D2[i];
@@ -640,10 +686,102 @@ TSTP_EXPORT int topspin_tp_solve(const int *state, double limitMs, int variants,
     else if (m > 0 && x == 0 && w[m - 1] == 0) m--;
     else w[m++] = x;
   }
-  variantWord(best.variant, w, m);
-  if (m > outMax) return -4;
-  memcpy(out, w, m * sizeof(int));
-  return m;
+  return variantWord(b->variant, w, m);
+}
+
+/* ---------- Library interface ---------- */
+
+TSTP_EXPORT void topspin_tp_free(void) {
+  free(D2); free(E2); free(colA); free(pairT); free(pairExcKey); free(pairExcVal);
+  free(ball); free(tasks); free(nx); free(ctxs);
+  D2 = E2 = colA = pairT = pairExcVal = NULL; pairExcKey = NULL; ball = NULL; tasks = nx = NULL; ctxs = NULL;
+  ready = 0;
+}
+
+/* Builds the tables; cache, if not NULL or empty, names a file that holds the matching and parity
+   table (read when it is there and complete, written after building it).  threads <= 0 uses
+   every core.  Returns 0, or -1 when memory runs out. */
+TSTP_EXPORT int topspin_tp_init(const char *cache, int threads) {
+  if (ready) return 0;
+  nThreads = threads > 0 ? threads : omp_get_max_threads();
+  if (nThreads > 256) nThreads = 256;
+  initMoves();
+  D2 = malloc(HSIZE); E2 = malloc(HSIZE); colA = malloc(1 << 20); pairT = malloc(MSIZE);
+  tasks = malloc(MAXTASK * sizeof(Task)); nx = malloc(MAXTASK * sizeof(Task));
+  ctxs = malloc(256 * sizeof(Ctx));
+  if (!D2 || !E2 || !colA || !pairT || !tasks || !nx || !ctxs) { topspin_tp_free(); return -1; }
+  buildPhase2();
+  buildColor();
+  if (!(cache && *cache && readPairing(cache))) {
+    if (!buildPairing()) { topspin_tp_free(); return -1; }
+    if (cache && *cache) writePairing(cache);
+  }
+  ball = malloc(ballCap * sizeof(uint64_t));
+  if (!ball || !buildBall()) { topspin_tp_free(); return -1; }
+  ready = 1;
+  return 0;
+}
+
+/* Solves state, given 1-based as TopSpinSolve takes it (state[P - 1] is the label in position P).
+   out gets the steps: 0 for F, r for R^r (r = 1..19).  limitMs >= 0 stops the search after that
+   many milliseconds, once some solution is known.  limitMs = -k searches the phase-1 length of
+   the first solution and k - 1 more lengths, each within BOUND_BUDGET nodes per variant, which
+   makes the answer the same on any number of threads; it gives up after TOTAL_BUDGET nodes
+   without a solution.  variants is 1 to 8: the first that many of the variants 0, 1, ..., 7
+   above are searched, with their phase-1 lengths interleaved, and the shortest solution is kept.
+   Returns the number of steps, or -1 (not initialized), -2 (not a permutation of 1..20), -3 (no
+   solution: 20 s past the limit, or the node budget), -4 (out too short). */
+TSTP_EXPORT int topspin_tp_solve(const int *state, double limitMs, int variants, int *out, int outMax) {
+  uint8_t s0[20], pos[8][20], s[20];
+  int h0[8], lo = INF, firstBound = -1, bestN = -1, bestE = INF, w[256], minSteps = INF;
+  long long used = 0, budget = limitMs < 0 ? BOUND_BUDGET : 0;
+  uint32_t seen = 0;
+  Best bv[8];
+  if (!ready) return -1;
+  for (int p = 0; p < 20; p++) {
+    if (state[p] < 1 || state[p] > 20 || ((seen >> (state[p] - 1)) & 1)) return -2;
+    seen |= 1u << (state[p] - 1);
+    s0[p] = (uint8_t)(state[p] - 1);
+  }
+  if (variants < 1) variants = 1;
+  if (variants > 8) variants = 8;
+  for (int i = 0; i < nThreads; i++) { ctxs[i].nodes = 0; ctxs[i].nsol = 0; }
+  timeUp = 0; haveSol = 0;
+  deadline = nowMs() + (limitMs >= 0 ? limitMs : 1e12);
+  for (int v = 0; v < variants; v++) {
+    uint8_t y[20];
+    bv[v].steps = INF; bv[v].elem = INF; bv[v].variant = -1;
+    variantState(s0, v, s);
+    for (int p = 0; p < 20; p++) pos[v][s[p]] = (uint8_t)p;
+    for (int l = 0; l < 20; l++) y[l] = pm[0][pos[v][l]];
+    int a = hA1(pos[v]), b = 1 + hA1(y);
+    h0[v] = a < b ? a : b;
+    if (h0[v] < lo) lo = h0[v];
+  }
+  for (bound1 = lo; bound1 <= minSteps && bound1 < 60 && !timeUp; bound1++) {
+    if (limitMs < 0 && firstBound >= 0 && bound1 - firstBound >= -limitMs) break;
+    for (int v = 0; v < variants && !timeUp; v++) if (bound1 >= h0[v]) used += searchBound(pos[v], v, &bv[v], budget);
+    for (int v = 0; v < variants; v++) if (bv[v].steps < minSteps) minSteps = bv[v].steps;
+#ifdef TOPSPIN_TP_MAIN
+    if (getenv("TOPSPIN_TP_DEBUG")) fprintf(stderr, "  bound %d (roots %d %d): %lld nodes, best %d\n", bound1, h0[0], variants > 1 ? h0[1] : -1, used, minSteps);
+#endif
+    if (minSteps < INF && firstBound < 0) firstBound = bound1;
+    if (budget && firstBound < 0 && used >= TOTAL_BUDGET) break;
+  }
+  statNodes = 0; statSols = 0;
+  for (int i = 0; i < nThreads; i++) { statNodes += ctxs[i].nodes; statSols += ctxs[i].nsol; }
+  if (firstBound < 0 && limitMs < 0) return -3;
+  /* the relabeled variants end with an extra rotation, so compare the finished words */
+  for (int v = 0; v < variants; v++) {
+    if (bv[v].variant < 0) continue;
+    int x[256], n = variantSolution(s0, &bv[v], x), e = 0;
+    for (int i = 0; i < n; i++) e += elemOf(x[i]);
+    if (bestN < 0 || n < bestN || (n == bestN && e < bestE)) { bestN = n; bestE = e; memcpy(w, x, n * sizeof(int)); }
+  }
+  if (bestN < 0) return -3;
+  if (bestN > outMax) return -4;
+  memcpy(out, w, bestN * sizeof(int));
+  return bestN;
 }
 
 /* nodes searched and phase-1 solutions completed by the last solve */
@@ -671,7 +809,7 @@ int main(int argc, char **argv) {
   fclose(f);
   for (int li = 3; li < argc; li++) {
     double lim = atof(argv[li]), tsum = 0, tmax = 0;
-    long long ssum = 0, esum = 0, fsum = 0; int smax = 0, emax = 0, bad = 0;
+    long long ssum = 0, esum = 0, fsum = 0, nmax = 0; int smax = 0, emax = 0, bad = 0;
     char name[64]; sprintf(name, "tp_v%d_%s.txt", variants, argv[li]);
     FILE *o = fopen(name, "w");
     for (int i = 0; i < np; i++) {
@@ -679,6 +817,7 @@ int main(int argc, char **argv) {
       double a = nowMs();
       int n = topspin_tp_solve(P[i], lim, variants, w, 256);
       double b = nowMs() - a;
+      if (statNodes > nmax) nmax = statNodes;
       if (n < 0) { bad++; continue; }
       uint8_t s[20], t[20];
       for (int p = 0; p < 20; p++) s[p] = (uint8_t)(P[i][p] - 1);
@@ -691,8 +830,8 @@ int main(int argc, char **argv) {
       if (o) { fprintf(o, "%d %d %d %.3f", n, el, fl, b); for (int k = 0; k < n; k++) fprintf(o, " %d", w[k]); fprintf(o, "\n"); }
     }
     if (o) fclose(o);
-    printf("variants %d, limit %s: steps %.2f (max %d), elementary %.2f (max %d), flips %.2f, %.1f ms per solve (max %.0f), failures %d\n",
-           variants, argv[li], (double)ssum / np, smax, (double)esum / np, emax, (double)fsum / np, tsum / np, tmax, bad);
+    printf("variants %d, limit %s: steps %.2f (max %d), elementary %.2f (max %d), flips %.2f, %.1f ms per solve (max %.0f), nodes max %lld, failures %d\n",
+           variants, argv[li], (double)ssum / np, smax, (double)esum / np, emax, (double)fsum / np, tsum / np, tmax, nmax, bad);
   }
   topspin_tp_free();
   return 0;
