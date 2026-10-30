@@ -3,7 +3,7 @@
 [![Java tests](https://github.com/shenghuiy/OEIS_Mathematica/actions/workflows/maven.yml/badge.svg?branch=main)](https://github.com/shenghuiy/OEIS_Mathematica/actions/workflows/maven.yml)
 [![Python tests](https://github.com/shenghuiy/OEIS_Mathematica/actions/workflows/python.yml/badge.svg?branch=main)](https://github.com/shenghuiy/OEIS_Mathematica/actions/workflows/python.yml)
 
-A collection of research-grade tools for discrete mathematics and number theory: inverting arithmetic functions, sieving for exotic integer sequences, dissecting the dynamics of Bulgarian solitaire, solving the TopSpin permutation puzzle, and doing carry-less arithmetic. The code is written in Wolfram Language, Java and Python, checked against the literature, and explained page by page.
+A collection of research-grade tools for discrete mathematics and number theory: inverting arithmetic functions, sieving for exotic integer sequences, dissecting the dynamics of Bulgarian solitaire, and doing carry-less arithmetic. The code is written in Wolfram Language, Java and Python, checked against the literature, and explained page by page.
 
 <p align="center">
   <picture>
@@ -17,7 +17,6 @@ A collection of research-grade tools for discrete mathematics and number theory:
 - **Inverting arithmetic functions.** [`DivisorSigmaInverse`](docs/DivisorSigmaInverse.md) lists every $x$ with $\sigma_k(x) = n$, and [`EulerPhiInverse`](docs/EulerPhiInverse.md) every $x$ with $\varphi(x) = n$. Both are compiled with `FunctionCompile`; `EulerPhiInverse` returns all 220,281 solutions for $n = 2^{20} \cdot 3^5 \cdot 5^2 \cdot 7$ in about 0.06 s.
 - **Sieving for rare integers.** [A399539](docs/A399539.md) uses a compiled segmented sieve to find the numbers $k$ with $\psi(k) - \varphi(k) = d(k)^4$.
 - **Bulgarian solitaire, end to end.** [One package](docs/BulgarianSolitaire.md) covers orbits, cycles and Brandt's necklace count, Garden of Eden partitions (OEIS [A123975](https://oeis.org/A123975)), game-tree level sizes and the row-to-column game. It reproduces the closed forms in Pham's work on limiting level-size series, and tests her conjecture on every primitive necklace of length 3 to 5.
-- **Permutation puzzles.** [`TopSpinSolve`](docs/TopSpin.md) solves any position of the 20-token TopSpin puzzle in about 0.4 ms by sifting it through a stored table of short words, built once by a compiled run of Minkwitz's algorithm. Its solutions average about 180 moves, under a third of what the built-in `GroupElementToWord` gives. With `Method -> "TwoPhase"` it calls a [C implementation of Kociemba's two-phase method](docs/TopSpinTwoPhase.md) instead, whose solutions average about 49 steps against the table's 124.
 - **Carry-less arithmetic.** [`CarrylessArithmetic`](docs/CarrylessArithmetic.md) ports David Applegate's dismal-arithmetic program to Java, matching the original C output line for line, searches divisors and ranges of numbers in parallel (Java parallel streams), and can be called from Mathematica through [J/Link](https://reference.wolfram.com/language/JLink/tutorial/Overview.html).
 - **Tested.** Java and Python tests run in CI; the Wolfram packages have `VerificationTest` suites that include the examples from the docs.
 
@@ -31,7 +30,6 @@ Explanations of the code in this repository are in [`docs/`](docs/README.md).
 - [DivisorSigmaInverse](docs/DivisorSigmaInverse.md): `src/wolfram/DivisorSigmaInverse.wl`, a Mathematica port of `invsigmaDiv` from Max Alekseyev's `invphi.gp`; `invSigmaDivisors[n, k]` lists every $x$ with $\sigma_k(x)$ equal to each divisor of $n$, `DivisorSigmaInverse[n, k]` gives the solutions for $n$ itself, and `DivisorSigmaInverseCount[n, k]` counts them.
 - [Bulgarian solitaire](docs/BulgarianSolitaire.md): `src/wolfram/BulgarianSolitaire.wl`, the solitaire move on partitions with orbits, cycles and their count, Garden of Eden partitions, game-tree level sizes, and the row-to-column game.
 - [EulerPhiInverse](docs/EulerPhiInverse.md): `src/wolfram/EulerPhiInverse.wl`, a compiled depth-first search for every $x$ with $\varphi(x) = n$; `EulerPhiInverse[n]` returns them sorted.
-- [TopSpin solver](docs/TopSpin.md): `src/wolfram/TopSpin.wl`, rotations and flips that solve any 20-token position, found by sifting it through a stored table of short words; `TopSpinSolve[state]` returns the moves and `TopSpinApply[state, moves]` replays them. `Method -> "TwoPhase"` uses the [two-phase solver](docs/TopSpinTwoPhase.md) in `src/c/topspin_twophase` for much shorter solutions.
 
 ### Wolfram Function Repository
 
