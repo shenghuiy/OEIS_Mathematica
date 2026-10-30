@@ -22,6 +22,12 @@ VerificationTest[
   TestID -> "apply-left-to-right"
 ]
 
+VerificationTest[
+  OEIS`TopSpinApply[Range[20], #] & /@ {{"R3"}, {"L12"}, {"R25", "F"}},
+  {Join[Range[18, 20], Range[17]], Join[Range[13, 20], Range[12]], Join[{19, 18, 17, 16, 20}, Range[15]]},
+  TestID -> "apply-compressed-rotations"
+]
+
 VerificationTest[OEIS`TopSpinSolve[Range[20]], {}, TestID -> "solve-identity"]
 
 VerificationTest[
@@ -84,6 +90,34 @@ VerificationTest[
 ]
 
 VerificationTest[
+  OEIS`TopSpinSolve[#, "CompressRotations" -> True] & /@ {
+    Range[20], Join[{4, 3, 2, 1}, Range[5, 20]], RotateRight[Range[20], 7], Join[{3, 2, 1, 20}, Range[4, 19]]},
+  {{}, {"F"}, {"L7"}, {"F", "L"}},
+  TestID -> "solve-compressed-short-scrambles"
+]
+
+VerificationTest[
+  Length /@ (OEIS`TopSpinSolve[#, "CompressRotations" -> True] & /@ {Reverse[Range[20]], ReplacePart[Range[20], {19 -> 20, 20 -> 19}]}),
+  {148, 65},
+  TestID -> "solve-compressed-step-counts"
+]
+
+VerificationTest[
+  BlockRandom[
+    SeedRandom[20261030];
+    AllTrue[Table[RandomSample[Range[20]], {10}], Function[state,
+      Module[{moves = OEIS`TopSpinSolve[state], steps = OEIS`TopSpinSolve[state, "CompressRotations" -> True]},
+        OEIS`TopSpinSolve[state, "CompressRotations" -> False] === moves &&
+        steps === (If[Length[#] == 1, First[#], First[#] <> IntegerString[Length[#]]] & /@ Split[moves]) &&
+        OEIS`TopSpinApply[state, steps] === Range[20]
+      ]
+    ]]
+  ],
+  True,
+  TestID -> "solve-compressed-matches-runs"
+]
+
+VerificationTest[
   Module[{reducedQ = StringFreeQ[#, "RL" | "LR" | "FF" | StringRepeat["R", 11] | StringRepeat["L", 11]] &},
     AllTrue[Flatten[OEIS`Private`topSpinTable], reducedQ] &&
     BlockRandom[
@@ -119,8 +153,11 @@ VerificationTest[OEIS`TopSpinSolve[ConstantArray[1, 20]], $Failed, {OEIS`TopSpin
 VerificationTest[OEIS`TopSpinSolve[ReplacePart[Range[20], 1 -> x]], $Failed, {OEIS`TopSpinSolve::state}, TestID -> "reject-symbolic-state"]
 VerificationTest[OEIS`TopSpinSolve[N[Range[20]]], $Failed, {OEIS`TopSpinSolve::state}, TestID -> "reject-inexact-state"]
 VerificationTest[OEIS`TopSpinSolve["123"], $Failed, {OEIS`TopSpinSolve::state}, TestID -> "reject-nonlist-state"]
+VerificationTest[OEIS`TopSpinSolve[Range[20], "CompressRotations" -> 1], $Failed, {OEIS`TopSpinSolve::opttf}, TestID -> "reject-compress-option-value"]
+VerificationTest[OEIS`TopSpinSolve[Range[20], "Compress" -> True], $Failed, {OEIS`TopSpinSolve::optx}, TestID -> "reject-unknown-option"]
 VerificationTest[OEIS`TopSpinApply[Range[19], {}], $Failed, {OEIS`TopSpinApply::state}, TestID -> "apply-reject-invalid-state"]
 VerificationTest[OEIS`TopSpinApply[Range[20], "RF"], $Failed, {OEIS`TopSpinApply::moves}, TestID -> "reject-nonlist-moves"]
 VerificationTest[OEIS`TopSpinApply[Range[20], {"R", "X"}], $Failed, {OEIS`TopSpinApply::moves}, TestID -> "reject-unknown-move"]
 VerificationTest[OEIS`TopSpinApply[Range[20], {1}], $Failed, {OEIS`TopSpinApply::moves}, TestID -> "reject-integer-move"]
+VerificationTest[OEIS`TopSpinApply[Range[20], {"R0"}], $Failed, {OEIS`TopSpinApply::moves}, TestID -> "reject-zero-rotation-move"]
 VerificationTest[OEIS`TopSpinApply[Range[20], {_String}], $Failed, {OEIS`TopSpinApply::moves}, TestID -> "reject-pattern-move"]

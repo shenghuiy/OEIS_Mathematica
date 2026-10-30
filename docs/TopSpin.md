@@ -24,7 +24,22 @@ Read `moves` from left to right. Each string is one physical move.
 
 `Length[moves]` counts elementary moves. `Counts[moves]` gives the number of each move. The result solves the fixed-position target `Range[20]`, including its orientation. It never contains `"R", "L"`, `"L", "R"` or `"F", "F"` next to each other, or more than 10 rotations in a row.
 
-`TopSpinSolve[Range[20]]` returns `{}`. Both functions reject states that are not exact permutations of `Range[20]`, issuing a message and returning `$Failed`. `TopSpinApply` also rejects move lists containing anything other than the three strings above.
+`TopSpinSolve[Range[20]]` returns `{}`. Both functions reject states that are not exact permutations of `Range[20]`, issuing a message and returning `$Failed`. `TopSpinApply` also rejects move lists containing anything other than the three strings above and the rotation steps below.
+
+### Compressed steps
+
+On the physical puzzle, sliding the tokens several positions around the track is one motion. With `"CompressRotations" -> True`, `TopSpinSolve` writes each run of rotations as one step: `"R3"` rotates right by three positions and `"L7"` left by seven, while a run of one stays `"R"` or `"L"`. `Length[moves]` then counts these steps, with each flip still one step, and `TopSpinApply` executes them (it takes `"Rk"` and `"Lk"` for any positive integer `k`).
+
+```wolfram
+TopSpinSolve[RotateRight[Range[20], 7], "CompressRotations" -> True]
+(* {"L7"} *)
+TopSpinSolve[Join[{3, 2, 1, 20}, Range[4, 19]], "CompressRotations" -> True]
+(* {"F", "L"} *)
+```
+
+A step is at most `"R10"` or `"L9"`, and two rotation steps are never next to each other, so the steps alternate between a rotation and `"F"`. The word is the same as without the option: only how rotations are written and counted changes. Over the 200 random positions in [Performance](#performance), solutions average 123.6 steps (longest 185) against 179.9 elementary moves, and about 61 of those steps are flips. The table was chosen for elementary length, not for steps, so these counts are not the fewest steps a table could give.
+
+Any other option, or a value other than `True` or `False`, gives a message and `$Failed`.
 
 ## How it works
 
@@ -94,7 +109,7 @@ The generators are rotation and flip, in that order. A negative word entry denot
 TestReport["test/wolfram/TopSpin.wlt"]
 ```
 
-The 27 tests cover move semantics, exact orientation, an odd transposition, a noncommuting scramble, ten seeded arbitrary permutations, and invalid input. Independent list operations replay the noncommuting and random solutions. Three short scrambles must come back as their shortest solutions (`{"F"}`, seven `"L"`, and `{"F", "L"}`), and the reversed track and the odd transposition as words of 190 and 69 moves. The table must have rows of 19 down to 1 words, every entry must leave the positions above its base alone and bring its token to the base (replayed independently), and the table and the solutions must be reduced. The tests also check public symbol names. Rebuilding the table is not in the tests, since it takes about 90 s.
+The 34 tests cover move semantics, exact orientation, an odd transposition, a noncommuting scramble, ten seeded arbitrary permutations, and invalid input (including bad options and `"R0"`). Independent list operations replay the noncommuting and random solutions. Three short scrambles must come back as their shortest solutions (`{"F"}`, seven `"L"`, and `{"F", "L"}`, or `{"F"}`, `{"L7"}` and `{"F", "L"}` compressed), and the reversed track and the odd transposition as words of 190 and 69 moves, or 148 and 65 compressed steps. Compressed solutions of the random permutations must be the runs of the elementary ones and replay with `TopSpinApply`, which must also execute `"R3"`, `"L12"` and `"R25"`. The table must have rows of 19 down to 1 words, every entry must leave the positions above its base alone and bring its token to the base (replayed independently), and the table and the solutions must be reduced. The tests also check public symbol names. Rebuilding the table is not in the tests, since it takes about 90 s.
 
 ## References
 
