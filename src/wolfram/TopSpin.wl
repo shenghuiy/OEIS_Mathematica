@@ -2,7 +2,7 @@
 
 BeginPackage["OEIS`"];
 
-TopSpinSolve::usage = "TopSpinSolve[state] returns a list of R, L and F move strings that solves a permutation of Range[20] in fixed positions. The solution is not necessarily shortest. With \"CompressRotations\" -> True, each run of rotations is one step, written Rk or Lk for k positions (R or L for one).";
+TopSpinSolve::usage = "TopSpinSolve[state] returns a list of R, L and F move strings that solves a permutation of Range[20] in fixed positions. The solution is not necessarily shortest. With \"CompressRotations\" -> True, each run of rotations is one step, written Rk or Lk for k positions (R or L for one). Method -> \"TwoPhase\" finds much shorter solutions with the two-phase solver built from src/c/topspin_twophase; Method -> {\"TwoPhase\", \"TimeLimit\" -> t} searches for t seconds, and {\"TwoPhase\", \"PhaseOneLengths\" -> k} searches k phase-1 lengths instead of 1.";
 TopSpinApply::usage = "TopSpinApply[state, moves] executes R, L and F move strings from left to right. R rotates right, L rotates left, and F reverses positions 1 through 4. Rk and Lk rotate k positions.";
 
 Begin["`Private`"];
@@ -118,26 +118,85 @@ topSpinWords = Map[topSpinAmounts, topSpinTable, {2}];
 topSpinInverse = Map[InversePermutation[Fold[topSpinStep, Range[20], Characters[#]]] &, topSpinTable, {2}];
 
 (* ::Subsection:: *)
-(* Solving *)
+(* Solving with the table *)
 
 (* ::Text:: *)
 (* Applying a word w to a state s gives s[[p]] for an index list p, and the solved state needs p = Ordering[s]. At base position b, x[[b]] = k says which entry of row 21 - b to use. Its word goes on the solution, and x becomes its inverse index list composed with x, which fixes b. After 19 rows x is the identity. "CompressRotations" only changes how the reduced word is written out. *)
 
-Options[TopSpinSolve] = {"CompressRotations" -> False};
-
-TopSpinSolve[state_, opts : OptionsPattern[]] := Module[{x, words = {}, b, k,
-    unknown = FilterRules[{opts}, Except[Options[TopSpinSolve]]], compress},
-  If[!topSpinStateQ[state], Message[TopSpinSolve::state]; Return[$Failed]];
-  If[unknown =!= {}, Message[TopSpinSolve::optx, First[First[unknown]], HoldForm[TopSpinSolve[state, opts]]]; Return[$Failed]];
-  compress = OptionValue["CompressRotations"];
-  If[!BooleanQ[compress], Message[TopSpinSolve::opttf, "CompressRotations", compress]; Return[$Failed]];
-  x = Ordering[state];
+topSpinTableSolve[state_, compress_] := Module[{x = Ordering[state], words = {}, b, k},
   Do[
     b = 21 - i; k = x[[b]];
     If[k != b, AppendTo[words, topSpinWords[[i, k]]]; x = topSpinInverse[[i, k]][[x]]],
     {i, 19}
   ];
   If[compress, topSpinSteps, topSpinMoves][Fold[topSpinConcat, {0}, words]]
+];
+
+(* ::Subsection:: *)
+(* Solving with the two-phase library *)
+
+(* ::Text:: *)
+(* Method -> "TwoPhase" calls the C library built from src/c/topspin_twophase (docs/TopSpinTwoPhase.md) through ForeignFunctionLoad. Its CMake build puts topspin_twophase.dll (.so, .dylib) in build/ at the repository root; the environment variable TOPSPIN_TWOPHASE_LIB can name another directory. The first call builds the tables, about 1.7 GB: the largest is read from topspin_pairing.bin in that directory, or built (about 2 minutes on 16 threads) and written there. The library is looked for and set up once per session; a failed lookup is remembered too, and so is an error code from setting up the tables. *)
+
+(* ::Text:: *)
+(* The library takes the state as TopSpinSolve does and writes each step as 0 for F and r for R^r (r = 1..19). Its limit is a time in milliseconds, or -k to search k phase-1 lengths within fixed node budgets, which gives the same moves every time. It searches the position and its relabeled form (each label l as l + 1). topSpinTwoPhaseLimit turns the Method value into that limit, None for the table, or $Failed. *)
+
+topSpinPackageDirectory = DirectoryName[$InputFileName];
+
+topSpinTwoPhaseDirectory[] := With[{env = Environment["TOPSPIN_TWOPHASE_LIB"]},
+  If[StringQ[env], env, FileNameJoin[{topSpinPackageDirectory, "..", "..", "build"}]]];
+
+topSpinTwoPhaseFunction[] := topSpinTwoPhaseFunction[] = Module[{dir = topSpinTwoPhaseDirectory[], lib, init, solve, cache, code},
+  lib = ExpandFileName[FileNameJoin[{dir, "topspin_twophase" <> Switch[$OperatingSystem, "Windows", ".dll", "MacOSX", ".dylib", _, ".so"]}]];
+  If[!FileExistsQ[lib], Return[$Failed, Module]];
+  init = Quiet[ForeignFunctionLoad[lib, "topspin_tp_init", {"RawPointer"::["UnsignedInteger8"], "CInt"} -> "CInt"]];
+  solve = Quiet[ForeignFunctionLoad[lib, "topspin_tp_solve",
+    {"RawPointer"::["CInt"], "CDouble", "CInt", "RawPointer"::["CInt"], "CInt"} -> "CInt"]];
+  If[Head[init] =!= ForeignFunction || Head[solve] =!= ForeignFunction, Return[$Failed, Module]];
+  cache = ExpandFileName[FileNameJoin[{dir, "topspin_pairing.bin"}]];
+  code = init[RawMemoryExport[Append[ToCharacterCode[cache, "UTF-8"], 0], "UnsignedInteger8"], 0];
+  If[code == 0, solve, code]
+];
+
+topSpinTwoPhaseLimit[Automatic | "Table"] := None;
+topSpinTwoPhaseLimit["TwoPhase" | {"TwoPhase"}] := -1.;
+topSpinTwoPhaseLimit[{"TwoPhase", "TimeLimit" -> t_ /; NumericQ[t] && Positive[t]}] := 1000. t;
+topSpinTwoPhaseLimit[{"TwoPhase", "PhaseOneLengths" -> k_Integer?Positive}] := -1. k;
+topSpinTwoPhaseLimit[_] := $Failed;
+
+topSpinTwoPhaseSolve[state_, limit_, compress_] := Module[{f = topSpinTwoPhaseFunction[], out, n, steps, moves},
+  If[f === $Failed, Message[TopSpinSolve::nolib, topSpinTwoPhaseDirectory[]]; Return[$Failed, Module]];
+  If[IntegerQ[f], Message[TopSpinSolve::tpfail, f]; Return[$Failed, Module]];
+  out = RawMemoryAllocate["CInt", 256];
+  n = f[RawMemoryExport[state, "CInt"], limit, 2, out, 256];
+  If[n == -3, Message[TopSpinSolve::tpnone]; Return[topSpinTableSolve[state, compress], Module]];
+  If[n < 0, Message[TopSpinSolve::tpfail, n]; Return[$Failed, Module]];
+  steps = If[n == 0, {}, RawMemoryImport[out, {"List", n}]];
+  moves = Flatten[If[# == 0, "F", If[# <= 10, ConstantArray["R", #], ConstantArray["L", 20 - #]]] & /@ steps];
+  If[Fold[topSpinStep, state, moves] =!= Range[20], Message[TopSpinSolve::tpbad]; Return[$Failed, Module]];
+  If[compress, If[# == 0, "F", topSpinRun[#]] & /@ steps, moves]
+];
+
+(* ::Subsection:: *)
+(* Solving *)
+
+TopSpinSolve::method = "Method -> `1` is not \"Table\", \"TwoPhase\", {\"TwoPhase\", \"TimeLimit\" -> t} with t > 0 seconds, or {\"TwoPhase\", \"PhaseOneLengths\" -> k} with k a positive integer.";
+TopSpinSolve::nolib = "Method -> \"TwoPhase\" needs the library built from src/c/topspin_twophase; none was found in `1`.";
+TopSpinSolve::tpfail = "The two-phase library returned error code `1`.";
+TopSpinSolve::tpnone = "The two-phase search found no solution within its node budget or time; returning the stored table's solution.";
+TopSpinSolve::tpbad = "The two-phase library returned moves that do not solve the state; rebuild it from src/c/topspin_twophase.";
+
+Options[TopSpinSolve] = {"CompressRotations" -> False, Method -> "Table"};
+
+TopSpinSolve[state_, opts : OptionsPattern[]] := Module[{
+    unknown = FilterRules[{opts}, Except[Options[TopSpinSolve]]], compress, limit},
+  If[!topSpinStateQ[state], Message[TopSpinSolve::state]; Return[$Failed]];
+  If[unknown =!= {}, Message[TopSpinSolve::optx, First[First[unknown]], HoldForm[TopSpinSolve[state, opts]]]; Return[$Failed]];
+  compress = OptionValue["CompressRotations"];
+  If[!BooleanQ[compress], Message[TopSpinSolve::opttf, "CompressRotations", compress]; Return[$Failed]];
+  limit = topSpinTwoPhaseLimit[OptionValue[Method]];
+  If[limit === $Failed, Message[TopSpinSolve::method, OptionValue[Method]]; Return[$Failed]];
+  If[limit === None, topSpinTableSolve[state, compress], topSpinTwoPhaseSolve[state, limit, compress]]
 ];
 
 (* ::Subsection:: *)
